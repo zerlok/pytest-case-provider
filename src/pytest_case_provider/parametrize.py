@@ -1,58 +1,60 @@
 import inspect
 import typing as t
-from contextlib import contextmanager
 from functools import wraps
 
-import pytest
-from _pytest.fixtures import SubRequest
+from pytest_case_provider.abc import CaseCollector
+from pytest_case_provider.model import CaseInfo, CaseProviderFunc
+from pytest_case_provider.storage import CaseStorage
 
-from pytest_case_provider.case import CaseStorage
 
-
-class TestFunctionParametrizer[**U, V, T]:
+class ParametrizedTestFunction[**U, V, T](CaseCollector):
     def __init__(
         self,
-        testfunc: t.Callable[t.Concatenate[SubRequest, T, U], V],
+        case_param_name: str,
+        testfunc: t.Callable[U, V],
         cases: CaseStorage[T],
+        case_param_type: t.Optional[type[T]] = None,
     ) -> None:
+        self.__case_param_name = case_param_name
         self.__testfunc = testfunc
         self.__cases = cases
-        self.__case_param = list(inspect.signature(testfunc).parameters.values())[1]
+        self.__case_param_type = case_param_type
 
-    def __call__(self, request: SubRequest, *args: U.args, **kwargs: U.kwargs) -> V:
-        with self.__provide_case(request) as case:
-            kwargs[self._case_param_name] = case
-            return self.__testfunc(request, *args, **kwargs)
+    def __call__(self, provide_case: T, *args: U.args, **kwargs: U.kwargs) -> V:
+        if self.__case_param_type is not None and not isinstance(provide_case, self.__case_param_type):
+            msg = "provided case is not of valid type"
+            raise TypeError(msg, provide_case)
+
+        kwargs[self.__case_param_name] = provide_case
+
+        return self.__testfunc(*args, **kwargs)
+
+    @t.override
+    def collect_cases(self) -> t.Iterable[CaseInfo[T]]:
+        return self.__cases
 
     def case[**S](
         self,
         name: t.Optional[str] = None,
-    ) -> t.Callable[[t.Callable[S, T]], t.Callable[S, T]]:
+    ) -> t.Callable[[CaseProviderFunc[S, T]], CaseProviderFunc[S, T]]:
         return self.__cases.case(name=name)
 
-    @property
-    def _case_param_name(self) -> str:
-        return self.__case_param.name
-
-    @contextmanager
-    def __provide_case(self, request: SubRequest) -> t.Iterator[T]:
-        case_provider: object = request.getfixturevalue(self._case_param_name)
-        assert callable(case_provider)
-
-        case_provider_kwargs = {
-            param.name: t.cast("object", request.getfixturevalue(param.name))
-            for param in inspect.signature(case_provider).parameters.values()
-        }
-
-        case: object = case_provider(**case_provider_kwargs)
-        assert isinstance(case, self.__case_param.annotation)  # type: ignore[misc]
-
-        yield t.cast("T", case)
+    def include(self, *others: CaseStorage[T]) -> t.Self:
+        self.__cases.extend(*others)
+        return self
 
 
 def parametrize_cases[**U, V, T](
-    testfunc: t.Callable[t.Concatenate[SubRequest, T, U], V],
-) -> TestFunctionParametrizer[U, V, T]:
-    cases = CaseStorage[T]()
-    parametrizer = TestFunctionParametrizer(testfunc, cases)
-    return pytest.mark.parametrize(parametrizer._case_param_name, cases)(wraps(testfunc)(parametrizer))
+    testfunc: t.Callable[t.Concatenate[T, U], V],
+) -> ParametrizedTestFunction[U, V, T]:
+    sig = inspect.signature(testfunc)
+
+    wrapped_params = list(sig.parameters.values())
+    case_param, wrapped_params[0] = wrapped_params[0], wrapped_params[0].replace(name="provide_case")
+
+    parametrized = ParametrizedTestFunction(case_param.name, testfunc, CaseStorage[T](), case_param.annotation)
+
+    wrapped = wraps(testfunc)(parametrized)
+    wrapped.__signature__ = sig.replace(parameters=wrapped_params)
+
+    return wrapped

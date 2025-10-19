@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from _pytest.fixtures import SubRequest
-
 from pytest_case_provider.parametrize import parametrize_cases
 
 
@@ -15,7 +13,7 @@ def test_x() -> None:
 
 
 @parametrize_cases
-def test_simple(request: SubRequest, case: MyCase) -> None:
+def test_simple(case: MyCase) -> None:
     assert isinstance(case, MyCase)
 
 
