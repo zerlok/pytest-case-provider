@@ -1,7 +1,8 @@
 import abc
+import inspect
 import typing as t
 
-from pytest_case_provider.model import CaseInfo
+from pytest_case_provider.case.info import CaseInfo
 
 
 class ConditionalMark(metaclass=abc.ABCMeta):
@@ -15,6 +16,10 @@ class ConditionalMark(metaclass=abc.ABCMeta):
 
 
 class CaseCollector(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def get_signature(self) -> inspect.Signature:
+        raise NotImplementedError
+
     @abc.abstractmethod
     def collect_cases(self) -> t.Iterable[CaseInfo[object]]:
         raise NotImplementedError

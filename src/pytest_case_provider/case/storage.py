@@ -1,6 +1,7 @@
 import typing as t
 
-from pytest_case_provider.model import CaseInfo, CaseProviderFunc
+from pytest_case_provider.case.info import CaseInfo
+from pytest_case_provider.case.provider import CaseProvider, CaseProviderFunc
 
 
 class CaseStorage[T](t.Sequence[CaseInfo[T]]):
@@ -39,7 +40,7 @@ class CaseStorage[T](t.Sequence[CaseInfo[T]]):
         provider: CaseProviderFunc[U, T],
         name: t.Optional[str] = None,
     ) -> t.Self:
-        self.__cases.append(CaseInfo(name=name or provider.__name__, provider=provider))
+        self.__cases.append(CaseInfo(name=name or provider.__name__, provider=CaseProvider(provider)))
         return self
 
     def extend(self, *stores: t.Iterable[CaseInfo[T]]) -> t.Self:
