@@ -16,14 +16,14 @@ def parametrize_metafunc_with_fixture_params[**U, V](
 ) -> None:
     metafunc.parametrize(name, params, scope=scope, indirect=True)
 
-    # NOTE: replace fixture def created by metafunc
+    # NOTE: repeat FixtureManager._register_fixture logic
     fixture_defs = metafunc._arg2fixturedefs[name] = list(metafunc._arg2fixturedefs.get(name, []))
     fixture_defs.append(
         FixtureDef(
             config=metafunc.config,
             baseid="",
             argname=name,
-            func=fixture_func,  # use provided fixture func, not pytest's default
+            func=fixture_func,  # use provided fixture func
             scope=scope,
             params=None,  # parameters will be injected via `metafunc.parametrize`
             _ispytest=True,  # suppress deprecation warnings

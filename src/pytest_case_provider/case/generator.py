@@ -1,9 +1,8 @@
-import inspect
 import typing as t
 
 from _pytest.fixtures import SubRequest
 from _pytest.mark import ParameterSet
-from _pytest.python import Class, Metafunc
+from _pytest.python import Metafunc
 
 from pytest_case_provider.abc import CaseCollector
 from pytest_case_provider.case.provider import CaseProvider
@@ -16,7 +15,7 @@ class CaseFixtureTestGenerator:
 
         if isinstance(func, CaseCollector):
             cases = list(func.collect_cases())
-            case_param = self.__get_case_param(metafunc, func)
+            case_param = func.get_case_param()
 
             fixture_func = self.__build_fixture_func(
                 is_async=any(case.provider.is_async for case in cases),
@@ -36,20 +35,6 @@ class CaseFixtureTestGenerator:
                     for case in cases
                 ],
             )
-
-    def __get_case_param(
-        self,
-        metafunc: Metafunc,
-        func: CaseCollector,
-    ) -> inspect.Parameter:
-        params = iter(func.get_signature().parameters.values())
-
-        case_param = next(params)
-
-        if isinstance(metafunc.definition.parent, Class):
-            case_param = next(params)
-
-        return case_param
 
     def __build_fixture_func(
         self,

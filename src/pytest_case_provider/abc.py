@@ -17,7 +17,7 @@ class ConditionalMark(metaclass=abc.ABCMeta):
 
 class CaseCollector(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def get_signature(self) -> inspect.Signature:
+    def get_case_param(self) -> inspect.Parameter:
         raise NotImplementedError
 
     @abc.abstractmethod
