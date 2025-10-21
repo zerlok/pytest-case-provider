@@ -1,6 +1,6 @@
-"""This module will be loaded via pytester"""
+"""This module will be invoked via pytester"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import pytest
 
@@ -28,8 +28,15 @@ def test_case_injected(case: MyCase) -> None:
     assert isinstance(case, MyCase)
 
 
-# def test_foo_inc(case_foo_inc: MyCase) -> None:
-#     assert isinstance(case_foo_inc, MyCase)
+@inject_cases(test_case_injected)
+def test_case_increment(case: MyCase, case_foo_inc: MyCase) -> None:
+    assert isinstance(case, MyCase)
+    assert case.foo + 1 == case_foo_inc.foo
+
+
+@test_case_increment.case()
+def case_case_increment_special() -> MyCase:
+    return MyCase(foo=-1)
 
 
 @pytest.fixture
@@ -37,10 +44,10 @@ def number() -> int:
     return 42
 
 
-# TODO: inject case into pytest fixtures
-# @pytest.fixture
-# def case_foo_inc(case: MyCase) -> MyCase:
-#     return replace(case, foo=case.foo + 1)
+@pytest.fixture
+def case_foo_inc(case: MyCase) -> MyCase:
+    assert isinstance(case, MyCase)
+    return replace(case, foo=case.foo + 1)
 
 
 @test_case_injected.case()
@@ -63,8 +70,7 @@ class TestClass:
         assert True
 
     @inject_cases_method
-    def test_no_case_injected(self, case: MyCase,
-                              ) -> None:
+    def test_no_case_injected(self, case: MyCase) -> None:
         pytest.fail("this test should not run, because it has no cases")
 
     @inject_cases_method

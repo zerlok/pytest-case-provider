@@ -4,7 +4,7 @@ from _pytest.fixtures import SubRequest
 from _pytest.mark import ParameterSet
 from _pytest.python import Metafunc
 
-from pytest_case_provider.abc import CaseCollector
+from pytest_case_provider.abc import CaseParametrizer
 from pytest_case_provider.case.provider import CaseProvider
 from pytest_case_provider.fixture import parametrize_metafunc_with_fixture_params
 
@@ -13,7 +13,10 @@ class CaseFixtureTestGenerator:
     def generate(self, metafunc: Metafunc) -> None:
         func = metafunc.function
 
-        if isinstance(func, CaseCollector):
+        # TODO: traverse each fixture and apply case parametrization to fixtures, but only once
+
+        if isinstance(func, CaseParametrizer):
+            # TODO: deduplicate cases
             cases = list(func.collect_cases())
             case_param = func.get_case_param()
 

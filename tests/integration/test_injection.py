@@ -35,7 +35,7 @@ def parse_report(result: RunResult) -> Report:
     }
 
     for line in result.outlines:
-        match = TEST_RESULT_PATTERN.search(line)
+        match = TEST_RESULT_PATTERN.match(line)
         if match is not None:
             status = match.group("status")
             status2collection[status].add(match.group("name"))
@@ -47,7 +47,7 @@ def parse_report(result: RunResult) -> Report:
     ("path", "report"),
     [
         pytest.param(
-            (Path(__file__).parent / "inject_case.py"),
+            Path(__file__).parent / "inject_case.py",
             Report(
                 passed={
                     "test_inject_case_parametrizes_test_functions.py::TestClass::test_class_simple[case_class_number]",
@@ -58,6 +58,11 @@ def parse_report(result: RunResult) -> Report:
                     "test_inject_case_parametrizes_test_functions.py::test_case_injected[case_one]",
                     "test_inject_case_parametrizes_test_functions.py::test_case_injected[case_two]",
                     "test_inject_case_parametrizes_test_functions.py::test_without_case_injection",
+                    # injected cases from test_case_injected + one special case
+                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_case_increment_special]",
+                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_number]",
+                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_one]",
+                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_two]",
                 },
                 skipped={
                     "test_inject_case_parametrizes_test_functions.py::TestClass::test_no_case_injected[NOTSET]",

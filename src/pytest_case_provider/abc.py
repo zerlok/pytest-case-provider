@@ -15,11 +15,13 @@ class ConditionalMark(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class CaseCollector(metaclass=abc.ABCMeta):
+class CaseCollector[T](metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def get_case_param(self) -> inspect.Parameter:
+    def collect_cases(self) -> t.Iterable[CaseInfo[T]]:
         raise NotImplementedError
 
+
+class CaseParametrizer[T](CaseCollector[T], metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def collect_cases(self) -> t.Iterable[CaseInfo[object]]:
+    def get_case_param(self) -> inspect.Parameter:
         raise NotImplementedError

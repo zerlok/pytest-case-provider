@@ -1,31 +1,20 @@
 import typing as t
+from itertools import chain
 
 from _pytest.mark import MarkDecorator
 
+from pytest_case_provider.abc import CaseCollector
 from pytest_case_provider.case.info import CaseInfo
 from pytest_case_provider.case.provider import CaseProvider, CaseProviderFunc
 
 
-class CaseStorage[T](t.Sequence[CaseInfo[T]]):
-    def __init__(self, params: t.Optional[t.Sequence[CaseInfo[T]]] = None) -> None:
-        self.__cases = list[CaseInfo[T]](params or ())
-
-    @t.overload
-    def __getitem__(self, index: int) -> CaseInfo[T]: ...
-
-    @t.overload
-    def __getitem__(self, index: slice) -> t.Sequence[CaseInfo[T]]: ...
+class CaseStorage[T](CaseCollector[T]):
+    def __init__(self, cases: t.Optional[t.Sequence[CaseInfo[T]]] = None) -> None:
+        self.__cases = list[CaseInfo[T]](cases or ())
 
     @t.override
-    def __getitem__(
-        self,
-        index: t.Union[int, slice],
-    ) -> t.Union[CaseInfo[T], t.Sequence[CaseInfo[T]]]:
-        return self.__cases.__getitem__(index)
-
-    @t.override
-    def __len__(self) -> int:
-        return len(self.__cases)
+    def collect_cases(self) -> t.Iterable[CaseInfo[T]]:
+        return iter(self.__cases)
 
     def case[**U](
         self,
@@ -53,10 +42,51 @@ class CaseStorage[T](t.Sequence[CaseInfo[T]]):
         )
         return self
 
-    def extend(self, *stores: t.Iterable[CaseInfo[T]]) -> t.Self:
-        self.__cases.extend(case for store in stores for case in store)
+    def extend(self, *stores: t.Union[t.Sequence[CaseInfo[T]], CaseCollector[T]]) -> t.Self:
+        for store in stores:
+            if isinstance(store, CaseCollector):
+                self.__cases.extend(store.collect_cases())
+            else:
+                self.__cases.extend(case for case in store)
+
         return self
 
-    def union(self, *stores: t.Iterable[CaseInfo[T]]) -> t.Self:
-        clone = self.__class__()
-        return clone.extend(self, *stores)
+
+class CompositeCaseStorage[T](CaseCollector[T]):
+    def __init__(self, *stores: CaseCollector[T]) -> None:
+        self.__substores = list(stores)
+        self.__inner = CaseStorage[T]()
+        self.__substores.append(self.__inner)
+
+    @t.override
+    def collect_cases(self) -> t.Iterable[CaseInfo[T]]:
+        return chain.from_iterable(store.collect_cases() for store in self.__substores)
+
+    def case[**U](
+        self,
+        name: t.Optional[str] = None,
+        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+    ) -> t.Callable[[CaseProviderFunc[U, T]], CaseProviderFunc[U, T]]:
+        return self.__inner.case(name=name, marks=marks)
+
+    def append[**U](
+        self,
+        provider: CaseProviderFunc[U, T],
+        name: t.Optional[str] = None,
+        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+    ) -> t.Self:
+        self.__inner.append(provider, name=name, marks=marks)
+        return self
+
+    def extend(self, *stores: t.Union[t.Sequence[CaseInfo[T]], CaseCollector[T]]) -> t.Self:
+        for store in stores:
+            if isinstance(store, CaseCollector):
+                self.__substores.append(store)
+            else:
+                self.__inner.extend(store)
+
+        return self
+
+    def include(self, *others: CaseCollector[T]) -> t.Self:
+        self.__substores.extend(others)
+        return self
