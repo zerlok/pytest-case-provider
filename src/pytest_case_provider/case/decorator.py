@@ -41,7 +41,7 @@ class TestMethodCaseDecorator[**U, V, T, S](CompositeCaseStorage[T], CaseParamet
     @t.overload
     def __get__(self, instance: S, owner: type[S]) -> t.Callable[t.Concatenate[T, U], V]: ...
 
-    def __get__(self, instance: t.Optional[S], owner: type[S]) -> t.Union[t.Self, t.Callable[t.Concatenate[T, U], V]]:
+    def __get__(self, instance: S | None, owner: type[S]) -> t.Union[t.Self, t.Callable[t.Concatenate[T, U], V]]:
         return wraps(self.__testmethod)(partial(self, instance)) if instance is not None else self
 
     def __call__(self, instance: S, *args: U.args, **kwargs: U.kwargs) -> V:
@@ -87,7 +87,7 @@ def inject_cases[T](*includes: CaseCollector[T]) -> TestFuncCaseInjector[T]: ...
 
 
 def inject_cases[**U, V, T](
-    testfunc: t.Union[t.Optional[t.Callable[t.Concatenate[T, U], V]], CaseCollector[T]] = None,
+    testfunc: t.Union[t.Callable[t.Concatenate[T, U], V] | None, CaseCollector[T]] = None,
     *includes: CaseCollector[T],
 ) -> t.Union[TestFuncCaseDecorator[U, V, T], TestFuncCaseInjector[T]]:
     if isinstance(testfunc, CaseCollector):
@@ -109,7 +109,7 @@ def inject_cases_method[T](*includes: CaseCollector[T]) -> TestMethodCaseInjecto
 
 
 def inject_cases_method[**U, V, T, S](
-    testmethod: t.Union[t.Optional[t.Callable[t.Concatenate[S, T, U], V]], CaseCollector[T]] = None,
+    testmethod: t.Union[t.Callable[t.Concatenate[S, T, U], V] | None, CaseCollector[T]] = None,
     *includes: CaseCollector[T],
 ) -> t.Union[TestMethodCaseDecorator[U, V, T, S], TestMethodCaseInjector[T]]:
     if isinstance(testmethod, CaseCollector):

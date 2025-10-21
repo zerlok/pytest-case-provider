@@ -26,7 +26,7 @@ class FeatureFlagMark:
 
 class VersionRange(ConditionalMark):
     @classmethod
-    def python(cls, since: t.Sequence[int], until: t.Optional[t.Sequence[int]] = None) -> "VersionRange":
+    def python(cls, since: t.Sequence[int], until: t.Sequence[int] | None = None) -> "VersionRange":
         return cls("Python", "sys.version_info", since, until)
 
     def __init__(
@@ -34,7 +34,7 @@ class VersionRange(ConditionalMark):
         name: str,
         version_expr: str,
         since: t.Sequence[int],
-        until: t.Optional[t.Sequence[int]] = None,
+        until: t.Sequence[int] | None = None,
     ) -> None:
         self.__name = name
         self.__version_expr = version_expr

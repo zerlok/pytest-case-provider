@@ -7,7 +7,7 @@ authors = [
 ]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "pytest (>=8.4.2,<9.0.0)"
 ]
@@ -22,7 +22,7 @@ pytest-cov = "^7.0.0"
 
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py312"
 include = ["src/**/*.py", "tests/**/*.py"]
 force-exclude = true
 line-length = 120

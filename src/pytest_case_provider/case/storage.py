@@ -9,7 +9,7 @@ from pytest_case_provider.case.provider import CaseProvider, CaseProviderFunc
 
 
 class CaseStorage[T](CaseCollector[T]):
-    def __init__(self, cases: t.Optional[t.Sequence[CaseInfo[T]]] = None) -> None:
+    def __init__(self, cases: t.Sequence[CaseInfo[T]] | None = None) -> None:
         self.__cases = list[CaseInfo[T]](cases or ())
 
     @t.override
@@ -18,8 +18,8 @@ class CaseStorage[T](CaseCollector[T]):
 
     def case[**U](
         self,
-        name: t.Optional[str] = None,
-        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+        name: str | None = None,
+        marks: t.Sequence[MarkDecorator] | None = None,
     ) -> t.Callable[[CaseProviderFunc[U, T]], CaseProviderFunc[U, T]]:
         def inner(provider: CaseProviderFunc[U, T]) -> CaseProviderFunc[U, T]:
             self.append(provider, name=name, marks=marks)
@@ -30,8 +30,8 @@ class CaseStorage[T](CaseCollector[T]):
     def append[**U](
         self,
         provider: CaseProviderFunc[U, T],
-        name: t.Optional[str] = None,
-        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+        name: str | None = None,
+        marks: t.Sequence[MarkDecorator] | None = None,
     ) -> t.Self:
         self.__cases.append(
             CaseInfo(
@@ -64,16 +64,16 @@ class CompositeCaseStorage[T](CaseCollector[T]):
 
     def case[**U](
         self,
-        name: t.Optional[str] = None,
-        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+        name: str | None = None,
+        marks: t.Sequence[MarkDecorator] | None = None,
     ) -> t.Callable[[CaseProviderFunc[U, T]], CaseProviderFunc[U, T]]:
         return self.__inner.case(name=name, marks=marks)
 
     def append[**U](
         self,
         provider: CaseProviderFunc[U, T],
-        name: t.Optional[str] = None,
-        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+        name: str | None = None,
+        marks: t.Sequence[MarkDecorator] | None = None,
     ) -> t.Self:
         self.__inner.append(provider, name=name, marks=marks)
         return self

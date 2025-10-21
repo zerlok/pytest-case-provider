@@ -12,7 +12,7 @@ def parametrize_metafunc_with_fixture_params[**U, V](
     name: str,
     fixture_func: t.Callable[t.Concatenate[SubRequest, U], V],
     params: t.Sequence[ParameterSet],
-    scope: t.Optional[_ScopeName] = None,
+    scope: _ScopeName | None = None,
 ) -> None:
     metafunc.parametrize(name, params, scope=scope, indirect=True)
 

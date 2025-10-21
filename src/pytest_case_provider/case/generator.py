@@ -43,7 +43,7 @@ class CaseFixtureTestGenerator:
         self,
         *,
         is_async: bool,
-        of_type: t.Optional[type[object]] = None,
+        of_type: type[object] | None = None,
     ) -> t.Callable[..., object]:
         if is_async:
 
