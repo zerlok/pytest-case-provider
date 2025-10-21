@@ -1,5 +1,7 @@
 import typing as t
 
+from _pytest.mark import MarkDecorator
+
 from pytest_case_provider.case.info import CaseInfo
 from pytest_case_provider.case.provider import CaseProvider, CaseProviderFunc
 
@@ -28,9 +30,10 @@ class CaseStorage[T](t.Sequence[CaseInfo[T]]):
     def case[**U](
         self,
         name: t.Optional[str] = None,
+        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
     ) -> t.Callable[[CaseProviderFunc[U, T]], CaseProviderFunc[U, T]]:
         def inner(provider: CaseProviderFunc[U, T]) -> CaseProviderFunc[U, T]:
-            self.append(provider, name=name)
+            self.append(provider, name=name, marks=marks)
             return provider
 
         return inner
@@ -39,8 +42,15 @@ class CaseStorage[T](t.Sequence[CaseInfo[T]]):
         self,
         provider: CaseProviderFunc[U, T],
         name: t.Optional[str] = None,
+        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
     ) -> t.Self:
-        self.__cases.append(CaseInfo(name=name or provider.__name__, provider=CaseProvider(provider)))
+        self.__cases.append(
+            CaseInfo(
+                name=name or provider.__name__,
+                provider=CaseProvider(provider),
+                marks=marks or (),
+            )
+        )
         return self
 
     def extend(self, *stores: t.Iterable[CaseInfo[T]]) -> t.Self:

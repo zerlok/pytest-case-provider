@@ -38,6 +38,7 @@ class CaseFixtureTestGenerator:
 
     def __build_fixture_func(
         self,
+        *,
         is_async: bool,
         of_type: t.Optional[type[object]] = None,
     ) -> t.Callable[..., object]:

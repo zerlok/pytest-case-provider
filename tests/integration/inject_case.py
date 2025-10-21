@@ -1,8 +1,10 @@
+"""This module will be loaded via pytester"""
+
 from dataclasses import dataclass
 
 import pytest
 
-from pytest_case_provider import inject_cases, inject_method_cases
+from pytest_case_provider import inject_cases, inject_cases_method
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -10,12 +12,19 @@ class MyCase:
     foo: int
 
 
-def test_x() -> None:
+def test_without_case_injection() -> None:
     assert True
 
 
 @inject_cases
-def test_simple(case: MyCase) -> None:
+def test_no_case_injected(
+    case: MyCase,  # noqa: ARG001
+) -> None:
+    pytest.fail("this test should not run, because it has no cases")
+
+
+@inject_cases
+def test_case_injected(case: MyCase) -> None:
     assert isinstance(case, MyCase)
 
 
@@ -34,26 +43,31 @@ def number() -> int:
 #     return replace(case, foo=case.foo + 1)
 
 
-@test_simple.case()
+@test_case_injected.case()
 def case_one() -> MyCase:
     return MyCase(foo=1)
 
 
-@test_simple.case()
+@test_case_injected.case()
 def case_two() -> MyCase:
     return MyCase(foo=2)
 
 
-@test_simple.case()
+@test_case_injected.case()
 def case_number(number: int) -> MyCase:
     return MyCase(foo=number)
 
 
 class TestClass:
-    def test_class_x(self) -> None:
+    def test_without_case_injection(self) -> None:
         assert True
 
-    @inject_method_cases
+    @inject_cases_method
+    def test_no_case_injected(self, case: MyCase,
+                              ) -> None:
+        pytest.fail("this test should not run, because it has no cases")
+
+    @inject_cases_method
     def test_class_simple(self, case: MyCase) -> None:
         assert isinstance(case, MyCase)
 

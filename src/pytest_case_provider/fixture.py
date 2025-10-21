@@ -17,7 +17,7 @@ def parametrize_metafunc_with_fixture_params[**U, V](
     metafunc.parametrize(name, params, scope=scope, indirect=True)
 
     # NOTE: repeat FixtureManager._register_fixture logic
-    fixture_defs = metafunc._arg2fixturedefs[name] = list(metafunc._arg2fixturedefs.get(name, []))
+    fixture_defs = metafunc._arg2fixturedefs[name] = list(metafunc._arg2fixturedefs.get(name, []))  # noqa: SLF001
     fixture_defs.append(
         FixtureDef(
             config=metafunc.config,

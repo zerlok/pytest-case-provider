@@ -34,7 +34,7 @@ class CaseProvider[V]:
 
         else:
             case = invoke_with_fixture_values(request, self.__provider)
-            yield case
+            yield t.cast("V", case)
 
     @asynccontextmanager
     async def provide_async(self, request: SubRequest) -> t.AsyncIterator[V]:
@@ -52,4 +52,4 @@ class CaseProvider[V]:
 
         else:
             case = invoke_with_fixture_values(request, self.__provider)
-            yield case
+            yield t.cast("V", case)
