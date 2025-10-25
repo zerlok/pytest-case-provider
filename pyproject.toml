@@ -29,6 +29,7 @@ case_provider = "pytest_case_provider.plugin"
 mypy = "^1.18.2"
 ruff = "^0.14.1"
 pytest-cov = "^7.0.0"
+pytest-asyncio = "^1.2.0"
 
 
 [tool.ruff]
@@ -123,6 +124,7 @@ addopts = [
 testpaths = [
     "tests",
 ]
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 branch = true

@@ -1,3 +1,5 @@
+import asyncio
+import typing as t
 from dataclasses import dataclass, replace
 
 import pytest
@@ -24,26 +26,30 @@ def test_no_case_injected(
 @inject_cases
 def test_case_injected(case: MyCase) -> None:
     assert isinstance(case, MyCase)
+    assert case.foo > 0
 
 
-@inject_cases(test_case_injected)
-def test_case_increment(case: MyCase, case_foo_inc: MyCase) -> None:
+@inject_cases(test_case_injected)  # include cases from other test
+def test_case_injected_to_fixture(case: MyCase, case_foo_inc: MyCase) -> None:
     assert isinstance(case, MyCase)
     assert case.foo + 1 == case_foo_inc.foo
 
 
-@test_case_increment.case()
-def case_case_increment_special() -> MyCase:
+# this case is for `test_case_injected_to_fixture` only
+@test_case_injected_to_fixture.case()
+def case_case_minus_one() -> MyCase:
     return MyCase(foo=-1)
 
 
 @pytest.fixture
-def number() -> int:
+def special_number() -> int:
     return 42
 
 
 @pytest.fixture
-def case_foo_inc(case: MyCase) -> MyCase:
+def case_foo_inc(
+    case: MyCase,  # fixture can use case value
+) -> MyCase:
     assert isinstance(case, MyCase)
     return replace(case, foo=case.foo + 1)
 
@@ -59,8 +65,36 @@ def case_two() -> MyCase:
 
 
 @test_case_injected.case()
-def case_number(number: int) -> MyCase:
-    return MyCase(foo=number)
+async def case_async_three_for_sync_test() -> MyCase:
+    await asyncio.sleep(0.01)
+    return MyCase(foo=3)
+
+
+@test_case_injected.case()
+def case_yield_four() -> t.Iterator[MyCase]:
+    yield MyCase(foo=4)
+
+
+@test_case_injected.case()
+async def case_async_yield_five_for_sync_test() -> t.AsyncIterator[MyCase]:
+    await asyncio.sleep(0.01)
+    yield MyCase(foo=5)
+
+
+@test_case_injected.case()
+def case_special_number(
+    special_number: int,  # case can use values from other fixtures
+) -> MyCase:
+    return MyCase(foo=special_number)
+
+
+@test_case_injected.case(
+    marks=[
+        pytest.mark.skip(reason="test case mark works"),
+    ]
+)
+def case_skipped() -> MyCase:
+    pytest.fail("this test should not run, because case provider has skip mark")
 
 
 class TestClass:
@@ -76,13 +110,17 @@ class TestClass:
         assert isinstance(case, MyCase)
 
     @test_class_simple.case()
-    def case_three(self) -> MyCase:
-        return MyCase(foo=3)
+    def case_six(self) -> MyCase:
+        return MyCase(foo=6)
 
     @test_class_simple.case()
-    def case_four(self) -> MyCase:
-        return MyCase(foo=4)
+    def case_seven(self) -> MyCase:
+        return MyCase(foo=7)
 
     @test_class_simple.case()
-    def case_class_number(self, number: int) -> MyCase:
-        return MyCase(foo=number)
+    def case_yield_eight(self) -> t.Iterator[MyCase]:
+        yield MyCase(foo=8)
+
+    @test_class_simple.case()
+    def case_class_special_number(self, special_number: int) -> MyCase:
+        return MyCase(foo=special_number)

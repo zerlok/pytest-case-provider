@@ -24,7 +24,7 @@ TEST_RESULT_PATTERN = re.compile(
 )
 
 
-def parse_report(outlines: t.Sequence[str]) -> Report:
+def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
     report = Report()
     status2collection = {
         "PASSED": report.passed,
@@ -39,7 +39,7 @@ def parse_report(outlines: t.Sequence[str]) -> Report:
         match = TEST_RESULT_PATTERN.match(line)
         if match is not None:
             status = match.group("status")
-            status2collection[status].add(match.group("name"))
+            status2collection[status].add(match.group("name").removeprefix(prefix))
 
     return report
 
@@ -51,30 +51,42 @@ def parse_report(outlines: t.Sequence[str]) -> Report:
             Path(__file__).parent / "test_inject_cases.py",
             Report(
                 passed={
-                    "test_inject_case_parametrizes_test_functions.py::TestClass::test_class_simple[case_class_number]",
-                    "test_inject_case_parametrizes_test_functions.py::TestClass::test_class_simple[case_four]",
-                    "test_inject_case_parametrizes_test_functions.py::TestClass::test_class_simple[case_three]",
-                    "test_inject_case_parametrizes_test_functions.py::TestClass::test_without_case_injection",
-                    "test_inject_case_parametrizes_test_functions.py::test_case_injected[case_number]",
-                    "test_inject_case_parametrizes_test_functions.py::test_case_injected[case_one]",
-                    "test_inject_case_parametrizes_test_functions.py::test_case_injected[case_two]",
-                    "test_inject_case_parametrizes_test_functions.py::test_without_case_injection",
-                    # injected cases from test_case_injected + one special case
-                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_case_increment_special]",
-                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_number]",
-                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_one]",
-                    "test_inject_case_parametrizes_test_functions.py::test_case_increment[case_two]",
+                    "::TestClass::test_class_simple[case_class_special_number]",
+                    "::TestClass::test_class_simple[case_six]",
+                    "::TestClass::test_class_simple[case_seven]",
+                    "::TestClass::test_class_simple[case_yield_eight]",
+                    "::TestClass::test_without_case_injection",
+                    "::test_case_injected[case_async_three_for_sync_test]",
+                    "::test_case_injected[case_async_yield_five_for_sync_test]",
+                    "::test_case_injected[case_one]",
+                    "::test_case_injected[case_special_number]",
+                    "::test_case_injected[case_two]",
+                    "::test_case_injected[case_yield_four]",
+                    "::test_case_injected_to_fixture[case_async_three_for_sync_test]",
+                    "::test_case_injected_to_fixture[case_async_yield_five_for_sync_test]",
+                    "::test_case_injected_to_fixture[case_case_minus_one]",
+                    "::test_case_injected_to_fixture[case_one]",
+                    "::test_case_injected_to_fixture[case_special_number]",
+                    "::test_case_injected_to_fixture[case_two]",
+                    "::test_case_injected_to_fixture[case_yield_four]",
+                    "::test_without_case_injection",
                 },
                 skipped={
-                    "test_inject_case_parametrizes_test_functions.py::TestClass::test_no_case_injected[NOTSET]",
-                    "test_inject_case_parametrizes_test_functions.py::test_no_case_injected[NOTSET]",
+                    "::test_case_injected[case_skipped]",
+                    "::test_case_injected_to_fixture[case_skipped]",
+                    "::TestClass::test_no_case_injected[NOTSET]",
+                    "::test_no_case_injected[NOTSET]",
                 },
+                failed=set(),
+                error=set(),
+                xfail=set(),
+                xpass=set(),
             ),
         )
     ],
 )
 def test_inject_case_parametrizes_test_functions(pytester: Pytester, path: Path, report: Report) -> None:
-    pytester.makepyfile(path.read_text())
-    result = pytester.runpytest_subprocess("-vvv")
+    path = pytester.makepyfile(path.read_text())
+    result = pytester.runpytest_subprocess("-vvv", "--asyncio-mode=auto")
 
-    assert parse_report(result.outlines) == report
+    assert parse_report(path.name, result.outlines) == report
