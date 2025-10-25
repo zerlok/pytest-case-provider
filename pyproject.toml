@@ -1,12 +1,18 @@
-[project]
+[tool.poetry]
 name = "pytest-case-provider"
-version = "0.1.1"
+version = "0.1.2"
 description = "Advanced pytest parametrization plugin that generates test case instances from sync or async factories."
-authors = [
-    {name = "zerlok", email = "danil.troshnev@gmail.com"}
-]
-license = { text = "MIT" }
+authors = ["zerlok <danil.troshnev@gmail.com>"]
 readme = "README.md"
+license = "MIT"
+keywords = [
+    "pytest",
+    "parametrize",
+    "test",
+    "case",
+    "testcase",
+    "decorator",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: Pytest",
@@ -17,19 +23,28 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Typing :: Typed",
 ]
-requires-python = ">=3.12"
-dependencies = [
-    "pytest (>=8.4.2,<9.0.0)"
-]
 
-[project.entry-points.pytest11]
+[tool.poetry.urls]
+Homepage = "https://github.com/zerlok/pytest-case-provider"
+Issues = "https://github.com/zerlok/pytest-case-provider/issues"
+
+[tool.poetry.plugins."pytest11"]
 case_provider = "pytest_case_provider.plugin"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pytest = "^8"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.18.2"
 ruff = "^0.14.1"
 pytest-cov = "^7.0.0"
 pytest-asyncio = "^1.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 
 [tool.ruff]
@@ -139,8 +154,3 @@ exclude_lines = [
     "@t.overload",
 ]
 show_missing = true
-
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
