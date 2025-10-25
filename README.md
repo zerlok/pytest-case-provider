@@ -78,6 +78,12 @@ def test_case_injected(case: MyCase) -> None:
     assert isinstance(case, MyCase)
 
 
+# Cross-inject from another test
+@inject_cases(test_case_injected)
+def test_case_increment(case: MyCase, case_foo_inc: MyCase) -> None:
+    assert case.foo + 1 == case_foo_inc.foo
+
+
 # Define case providers
 @test_case_injected.case()
 def case_one() -> MyCase:
@@ -89,6 +95,7 @@ def case_two() -> MyCase:
     return MyCase(foo=2)
 
 
+# Use other fixtures in case providers
 @test_case_injected.case()
 def case_number(number: int) -> MyCase:
     return MyCase(foo=number)
@@ -110,12 +117,6 @@ def case_iterable() -> typing.Iterator[MyCase]:
 @test_case_injected.case()
 async def case_async_iterable() -> typing.Iterator[MyCase]:
     yield MyCase(foo=20)
-
-
-# Cross-inject from another test
-@inject_cases(test_case_injected)
-def test_case_increment(case: MyCase, case_foo_inc: MyCase) -> None:
-    assert case.foo + 1 == case_foo_inc.foo
 
 
 # Access case object from fixture
@@ -150,6 +151,12 @@ test_example.py::test_case_injected[case_number] PASSED
 test_example.py::test_case_injected[case_async_generated] PASSED
 test_example.py::test_case_injected[case_iterable] PASSED
 test_example.py::test_case_injected[case_async_iterable] PASSED
+test_example.py::test_case_increment[case_one] PASSED
+test_example.py::test_case_increment[case_two] PASSED
+test_example.py::test_case_increment[case_number] PASSED
+test_example.py::test_case_increment[case_async_generated] PASSED
+test_example.py::test_case_increment[case_iterable] PASSED
+test_example.py::test_case_increment[case_async_iterable] PASSED
 test_example.py::TestClass::test_class_cases[case_three] PASSED
 test_example.py::TestClass::test_class_cases[case_four] PASSED
 ```
