@@ -53,8 +53,8 @@ class CaseStorage[T](CaseCollector[T]):
 
 
 class CompositeCaseStorage[T](CaseCollector[T]):
-    def __init__(self, *stores: CaseCollector[T]) -> None:
-        self.__substores = list(stores)
+    def __init__(self, *substores: CaseCollector[T]) -> None:
+        self.__substores = list(substores)
         self.__inner = CaseStorage[T]()
         self.__substores.append(self.__inner)
 
@@ -79,12 +79,7 @@ class CompositeCaseStorage[T](CaseCollector[T]):
         return self
 
     def extend(self, *stores: t.Union[t.Sequence[CaseInfo[T]], CaseCollector[T]]) -> t.Self:
-        for store in stores:
-            if isinstance(store, CaseCollector):
-                self.__substores.append(store)
-            else:
-                self.__inner.extend(store)
-
+        self.__inner.extend(*stores)
         return self
 
     def include(self, *others: CaseCollector[T]) -> t.Self:

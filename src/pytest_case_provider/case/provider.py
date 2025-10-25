@@ -18,6 +18,10 @@ class CaseProvider[V]:
     def __init__(self, func: CaseProviderFunc[..., V]) -> None:
         self.__func = func
 
+    @t.override
+    def __str__(self) -> str:
+        return f"<{self.__class__.__name__}: {self.__func}>"
+
     @property
     def is_async(self) -> bool:
         return inspect.iscoroutinefunction(self.__func) or inspect.isasyncgenfunction(self.__func)

@@ -30,13 +30,13 @@ def test_case_injected(case: MyCase) -> None:
 
 
 @inject_cases(test_case_injected)  # include cases from other test
-def test_case_injected_to_fixture(case: MyCase, case_foo_inc: MyCase) -> None:
+def test_cases_included_to_fixture(case: MyCase, case_foo_inc: MyCase) -> None:
     assert isinstance(case, MyCase)
     assert case.foo + 1 == case_foo_inc.foo
 
 
 # this case is for `test_case_injected_to_fixture` only
-@test_case_injected_to_fixture.case()
+@test_cases_included_to_fixture.case()
 def case_case_minus_one() -> MyCase:
     return MyCase(foo=-1)
 
@@ -106,21 +106,25 @@ class TestClass:
         pytest.fail("this test should not run, because it has no cases")
 
     @inject_cases_method
-    def test_class_simple(self, case: MyCase) -> None:
+    def test_class_case_injected(self, case: MyCase) -> None:
         assert isinstance(case, MyCase)
 
-    @test_class_simple.case()
+    @inject_cases_method(test_class_case_injected)
+    def test_class_cases_included(self, case: MyCase) -> None:
+        assert isinstance(case, MyCase)
+
+    @test_class_case_injected.case()
     def case_six(self) -> MyCase:
         return MyCase(foo=6)
 
-    @test_class_simple.case()
+    @test_class_case_injected.case()
     def case_seven(self) -> MyCase:
         return MyCase(foo=7)
 
-    @test_class_simple.case()
+    @test_class_case_injected.case()
     def case_yield_eight(self) -> t.Iterator[MyCase]:
         yield MyCase(foo=8)
 
-    @test_class_simple.case()
+    @test_class_case_injected.case()
     def case_class_special_number(self, special_number: int) -> MyCase:
         return MyCase(foo=special_number)

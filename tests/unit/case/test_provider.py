@@ -32,9 +32,29 @@ _SPECIAL_INT_VALUE = _SIMPLE_INT_VALUE**2
         provide_fixture_int_async_iter,
     ],
 )
-def test_case_provider_signature(
+def test_case_provider_to_str(  # type: ignore[misc]
     provider: CaseProvider[int],
-    func: CaseProviderFunc[int],
+    func: CaseProviderFunc[..., int],
+) -> None:
+    assert str(func) in str(provider)
+
+
+@pytest.mark.parametrize(
+    "func",
+    [
+        provide_int,
+        provide_int_iter,
+        provide_int_async,
+        provide_int_async_iter,
+        provide_fixture_int,
+        provide_fixture_int_iter,
+        provide_fixture_int_async,
+        provide_fixture_int_async_iter,
+    ],
+)
+def test_case_provider_signature(  # type: ignore[misc]
+    provider: CaseProvider[int],
+    func: CaseProviderFunc[..., int],
 ) -> None:
     assert provider.signature == inspect.signature(func)
 
@@ -54,6 +74,7 @@ def test_case_provider_signature(
 )
 def test_case_provider_is_async(
     provider: CaseProvider[int],
+    *,
     expected_is_async: bool,
 ) -> None:
     assert provider.is_async == expected_is_async
@@ -106,5 +127,5 @@ def stub_provide_fixture_int_value() -> int:
 
 
 @pytest.fixture
-def provider(func: CaseProviderFunc[int]) -> CaseProvider[int]:
+def provider(func: CaseProviderFunc[..., int]) -> CaseProvider[int]:
     return CaseProvider(func)

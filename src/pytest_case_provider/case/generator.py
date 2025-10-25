@@ -19,16 +19,12 @@ class CaseFixtureTestGenerator:
             # TODO: deduplicate cases
             cases = list(func.collect_cases())
             case_param = func.get_case_param()
-
-            fixture_func = self.__build_fixture_func(
-                is_async=any(case.provider.is_async for case in cases),
-                of_type=case_param.annotation,
-            )
+            is_async = any(case.provider.is_async for case in cases)
 
             parametrize_metafunc_with_fixture_params(
                 metafunc=metafunc,
                 name=case_param.name,
-                fixture_func=fixture_func,
+                fixture_func=_invoke_provider_async if is_async else _invoke_provider,
                 params=[
                     ParameterSet.param(
                         case.provider,
@@ -39,36 +35,20 @@ class CaseFixtureTestGenerator:
                 ],
             )
 
-    def __build_fixture_func(
-        self,
-        *,
-        is_async: bool,
-        of_type: type[object] | None = None,
-    ) -> t.Callable[..., object]:
-        if is_async:
 
-            async def invoke_async(request: SubRequest) -> t.AsyncIterator[object]:
-                provider = request.param
-                if not isinstance(provider, CaseProvider):
-                    msg = "CaseProvider type was expected"
-                    raise TypeError(msg, provider)
+async def _invoke_provider_async(request: SubRequest) -> t.AsyncIterator[object]:
+    provider = request.param
+    # NOTE: test generator parametrizes this fixture, thus this check should always pass
+    assert isinstance(provider, CaseProvider), f"CaseProvider type was expected, got: {provider}"
 
-                async with provider.provide_async(request) as case:
-                    assert of_type is None or isinstance(case, of_type)
-                    yield case
+    async with provider.provide_async(request) as case:
+        yield case
 
-            return invoke_async
 
-        else:
+def _invoke_provider(request: SubRequest) -> t.Iterator[object]:
+    provider = request.param
+    # NOTE: test generator parametrizes this fixture, thus this check should always pass
+    assert isinstance(provider, CaseProvider), f"CaseProvider type was expected, got: {provider}"
 
-            def invoke(request: SubRequest) -> t.Iterator[object]:
-                provider = request.param
-                if not isinstance(provider, CaseProvider):
-                    msg = "CaseProvider type was expected"
-                    raise TypeError(msg, provider)
-
-                with provider.provide_sync(request) as case:
-                    assert of_type is None or isinstance(case, of_type)
-                    yield case
-
-            return invoke
+    with provider.provide_sync(request) as case:
+        yield case

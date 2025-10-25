@@ -6,13 +6,13 @@ from pytest_case_provider.case.decorator import TestFuncCaseDecorator, TestMetho
 def test_test_func_case_decorator_to_str(
     my_test_func_decorator: TestFuncCaseDecorator[[], None, int],
 ) -> None:
-    assert my_test_func.__name__ in str(my_test_func_decorator)
+    assert str(my_test_func) in str(my_test_func_decorator)
 
 
 def test_test_method_case_decorator_to_str(
     my_test_method_decorator: TestMethodCaseDecorator[[], None, int, "MyTestClass"],
 ) -> None:
-    assert MyTestClass.my_test_func.__name__ in str(my_test_method_decorator)
+    assert str(MyTestClass.my_test_func) in str(my_test_method_decorator)
 
 
 def my_test_func(my_case: int) -> None:
