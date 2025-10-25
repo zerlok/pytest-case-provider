@@ -128,6 +128,7 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 branch = true
+patch = ["subprocess"]
 
 [tool.coverage.report]
 exclude_lines = [

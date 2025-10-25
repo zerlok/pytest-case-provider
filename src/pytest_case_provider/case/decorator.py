@@ -6,7 +6,7 @@ from pytest_case_provider.abc import CaseCollector, CaseParametrizer
 from pytest_case_provider.case.storage import CompositeCaseStorage
 
 
-class TestFuncCaseDecorator[**U, V, T](CompositeCaseStorage[T], CaseParametrizer[T]):
+class FuncCaseDecorator[**U, V, T](CompositeCaseStorage[T], CaseParametrizer[T]):
     def __init__(self, testfunc: t.Callable[t.Concatenate[T, U], V]) -> None:
         super().__init__()
         self.__testfunc = testfunc
@@ -25,7 +25,7 @@ class TestFuncCaseDecorator[**U, V, T](CompositeCaseStorage[T], CaseParametrizer
         return next(iter(inspect.signature(self.__testfunc).parameters.values()))
 
 
-class TestMethodCaseDecorator[**U, V, T, S](CompositeCaseStorage[T], CaseParametrizer[T]):
+class MethodCaseDecorator[**U, V, T, S](CompositeCaseStorage[T], CaseParametrizer[T]):
     def __init__(self, testmethod: t.Callable[t.Concatenate[S, T, U], V]) -> None:
         super().__init__()
         self.__testmethod = testmethod
@@ -59,8 +59,8 @@ class TestFuncCaseInjector[T]:
     def __init__(self, includes: t.Sequence[CaseCollector[T]]) -> None:
         self.__includes = includes
 
-    def __call__[**U, V](self, testfunc: t.Callable[t.Concatenate[T, U], V]) -> TestFuncCaseDecorator[U, V, T]:
-        collector = TestFuncCaseDecorator[U, V, T](testfunc)
+    def __call__[**U, V](self, testfunc: t.Callable[t.Concatenate[T, U], V]) -> FuncCaseDecorator[U, V, T]:
+        collector = FuncCaseDecorator[U, V, T](testfunc)
         collector.include(*self.__includes)
         return collector
 
@@ -72,14 +72,14 @@ class TestMethodCaseInjector[T]:
     def __call__[**U, V, S](
         self,
         testmethod: t.Callable[t.Concatenate[S, T, U], V],
-    ) -> TestMethodCaseDecorator[U, V, T, S]:
-        collector = TestMethodCaseDecorator[U, V, T, S](testmethod)
+    ) -> MethodCaseDecorator[U, V, T, S]:
+        collector = MethodCaseDecorator[U, V, T, S](testmethod)
         collector.include(*self.__includes)
         return collector
 
 
 @t.overload
-def inject_cases[**U, V, T](testfunc: t.Callable[t.Concatenate[T, U], V]) -> TestFuncCaseDecorator[U, V, T]: ...
+def inject_cases[**U, V, T](testfunc: t.Callable[t.Concatenate[T, U], V]) -> FuncCaseDecorator[U, V, T]: ...
 
 
 @t.overload
@@ -89,7 +89,7 @@ def inject_cases[T](*includes: CaseCollector[T]) -> TestFuncCaseInjector[T]: ...
 def inject_cases[**U, V, T](
     testfunc: t.Union[t.Callable[t.Concatenate[T, U], V] | None, CaseCollector[T]] = None,
     *includes: CaseCollector[T],
-) -> t.Union[TestFuncCaseDecorator[U, V, T], TestFuncCaseInjector[T]]:
+) -> t.Union[FuncCaseDecorator[U, V, T], TestFuncCaseInjector[T]]:
     if isinstance(testfunc, CaseCollector):
         return TestFuncCaseInjector((testfunc, *includes))
 
@@ -101,7 +101,7 @@ def inject_cases[**U, V, T](
 @t.overload
 def inject_cases_method[**U, V, T, S](
     testmethod: t.Callable[t.Concatenate[S, T, U], V],
-) -> TestMethodCaseDecorator[U, V, T, S]: ...
+) -> MethodCaseDecorator[U, V, T, S]: ...
 
 
 @t.overload
@@ -111,7 +111,7 @@ def inject_cases_method[T](*includes: CaseCollector[T]) -> TestMethodCaseInjecto
 def inject_cases_method[**U, V, T, S](
     testmethod: t.Union[t.Callable[t.Concatenate[S, T, U], V] | None, CaseCollector[T]] = None,
     *includes: CaseCollector[T],
-) -> t.Union[TestMethodCaseDecorator[U, V, T, S], TestMethodCaseInjector[T]]:
+) -> t.Union[MethodCaseDecorator[U, V, T, S], TestMethodCaseInjector[T]]:
     if isinstance(testmethod, CaseCollector):
         return TestMethodCaseInjector((testmethod, *includes))
 
