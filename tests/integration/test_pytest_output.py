@@ -1,9 +1,10 @@
 import re
+import typing as t
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
-from _pytest.pytester import Pytester, RunResult
+from _pytest.pytester import Pytester
 
 pytest_plugins = "pytester"
 
@@ -23,7 +24,7 @@ TEST_RESULT_PATTERN = re.compile(
 )
 
 
-def parse_report(result: RunResult) -> Report:
+def parse_report(outlines: t.Sequence[str]) -> Report:
     report = Report()
     status2collection = {
         "PASSED": report.passed,
@@ -34,7 +35,7 @@ def parse_report(result: RunResult) -> Report:
         "XPASS": report.xpass,
     }
 
-    for line in result.outlines:
+    for line in outlines:
         match = TEST_RESULT_PATTERN.match(line)
         if match is not None:
             status = match.group("status")
@@ -47,7 +48,7 @@ def parse_report(result: RunResult) -> Report:
     ("path", "report"),
     [
         pytest.param(
-            Path(__file__).parent / "inject_case.py",
+            Path(__file__).parent / "test_inject_cases.py",
             Report(
                 passed={
                     "test_inject_case_parametrizes_test_functions.py::TestClass::test_class_simple[case_class_number]",
@@ -74,6 +75,6 @@ def parse_report(result: RunResult) -> Report:
 )
 def test_inject_case_parametrizes_test_functions(pytester: Pytester, path: Path, report: Report) -> None:
     pytester.makepyfile(path.read_text())
-    result = pytester.runpytest("-vvv")
+    result = pytester.runpytest_subprocess("-vvv")
 
-    assert parse_report(result) == report
+    assert parse_report(result.outlines) == report

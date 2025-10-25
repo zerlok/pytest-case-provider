@@ -1,5 +1,3 @@
-"""This module will be invoked via pytester"""
-
 from dataclasses import dataclass, replace
 
 import pytest
