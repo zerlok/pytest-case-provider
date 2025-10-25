@@ -7,16 +7,8 @@
 [![Downloads](https://img.shields.io/pypi/dm/pytest-case-provider.svg)](https://pypistats.org/packages/pytest-case-provider)
 [![GitHub stars](https://img.shields.io/github/stars/zerlok/pytest-case-provider)](https://github.com/zerlok/pytest-case-provider/stargazers)
 
-Lightweight case parametrization for `pytest` with **fixture**, **class**, and **async** support.
+Case parametrization for `pytest` with **fixture**, **class**, and **async** support.
 Provides **declarative**, **typed** case injection for both sync and async test functions.
-
----
-
-## Installation
-
-```bash
-pip install pytest-case-provider
-````
 
 ---
 
@@ -48,7 +40,15 @@ Cases can be:
 
 ---
 
-## Example
+## Installation
+
+```bash
+pip install pytest-case-provider
+````
+
+---
+
+## Usage example
 
 ```python
 import typing
@@ -145,18 +145,18 @@ class TestClass:
 Pytest will expand each injected case as a distinct test variant using pytest's parametrization:
 
 ```
-test_example.py::test_case_injected[case_one] PASSED
-test_example.py::test_case_injected[case_two] PASSED
-test_example.py::test_case_injected[case_number] PASSED
-test_example.py::test_case_injected[case_async_generated] PASSED
-test_example.py::test_case_injected[case_iterable] PASSED
-test_example.py::test_case_injected[case_async_iterable] PASSED
-test_example.py::test_case_increment[case_one] PASSED
-test_example.py::test_case_increment[case_two] PASSED
-test_example.py::test_case_increment[case_number] PASSED
-test_example.py::test_case_increment[case_async_generated] PASSED
-test_example.py::test_case_increment[case_iterable] PASSED
-test_example.py::test_case_increment[case_async_iterable] PASSED
-test_example.py::TestClass::test_class_cases[case_three] PASSED
-test_example.py::TestClass::test_class_cases[case_four] PASSED
+test_example.py::test_case_injected[case_one]
+test_example.py::test_case_injected[case_two]
+test_example.py::test_case_injected[case_number]
+test_example.py::test_case_injected[case_async_generated]
+test_example.py::test_case_injected[case_iterable]
+test_example.py::test_case_injected[case_async_iterable]
+test_example.py::test_case_increment[case_one]
+test_example.py::test_case_increment[case_two]
+test_example.py::test_case_increment[case_number]
+test_example.py::test_case_increment[case_async_generated]
+test_example.py::test_case_increment[case_iterable]
+test_example.py::test_case_increment[case_async_iterable]
+test_example.py::TestClass::test_class_cases[case_three]
+test_example.py::TestClass::test_class_cases[case_four]
 ```
