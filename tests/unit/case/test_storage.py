@@ -13,6 +13,8 @@ from tests.stub.provider_func import (
     provide_int_async_iter,
 )
 
+T = t.TypeVar("T")
+
 
 def test_case_storage_collects_items(case_storage: CaseStorage[int], case_items: t.Sequence[CaseInfo[int]]) -> None:
     # storage is empty
@@ -97,8 +99,9 @@ def composite_case_storage() -> CompositeCaseStorage[int]:
     return CompositeCaseStorage[int]()
 
 
-def assert_collected_items[T](
-    collector: CaseCollector[T], items: t.Sequence[t.Union[CaseInfo[T], CaseProviderFunc[..., T]]]
+def assert_collected_items(
+    collector: CaseCollector[T],
+    items: t.Sequence[t.Union[CaseInfo[T], CaseProviderFunc[t.Any, T]]],
 ) -> None:
     assert [str(case.provider) for case in collector.collect_cases()] == [
         str(item.provider) if isinstance(item, CaseInfo) else str(CaseProvider(item)) for item in items

@@ -13,8 +13,7 @@ class PytestMatrixItem:
 
 # TODO: load supported versions from pyproject.toml
 # TODO: support older python versions
-# PYTHON_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
-PYTHON_VERSIONS = ["3.12", "3.13", "3.14"]
+PYTHON_VERSIONS = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
 PYTEST_MATRIX = [
     # TODO: support older pytest versions, note: pytest-asyncio < 1.0.0 must be used for older pytest; pytest-asyncio

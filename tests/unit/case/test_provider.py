@@ -1,4 +1,5 @@
 import inspect
+import typing as t
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -34,7 +35,7 @@ _SPECIAL_INT_VALUE = _SIMPLE_INT_VALUE**2
 )
 def test_case_provider_to_str(  # type: ignore[misc]
     provider: CaseProvider[int],
-    func: CaseProviderFunc[..., int],
+    func: CaseProviderFunc[t.Any, int],
 ) -> None:
     assert str(func) in str(provider)
 
@@ -54,7 +55,7 @@ def test_case_provider_to_str(  # type: ignore[misc]
 )
 def test_case_provider_signature(  # type: ignore[misc]
     provider: CaseProvider[int],
-    func: CaseProviderFunc[..., int],
+    func: CaseProviderFunc[t.Any, int],
 ) -> None:
     assert provider.signature == inspect.signature(func)
 
@@ -127,5 +128,5 @@ def stub_provide_fixture_int_value() -> int:
 
 
 @pytest.fixture
-def provider(func: CaseProviderFunc[..., int]) -> CaseProvider[int]:
+def provider(func: CaseProviderFunc[t.Any, int]) -> CaseProvider[int]:
     return CaseProvider(func)

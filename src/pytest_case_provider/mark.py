@@ -2,6 +2,7 @@ import typing as t
 
 import pytest
 from _pytest.mark import MarkDecorator
+from typing_extensions import override
 
 from pytest_case_provider.abc import ConditionalMark
 
@@ -26,7 +27,7 @@ class FeatureFlagMark:
 
 class VersionRange(ConditionalMark):
     @classmethod
-    def python(cls, since: t.Sequence[int], until: t.Sequence[int] | None = None) -> "VersionRange":
+    def python(cls, since: t.Sequence[int], until: t.Optional[t.Sequence[int]] = None) -> "VersionRange":
         return cls("Python", "sys.version_info", since, until)
 
     def __init__(
@@ -34,7 +35,7 @@ class VersionRange(ConditionalMark):
         name: str,
         version_expr: str,
         since: t.Sequence[int],
-        until: t.Sequence[int] | None = None,
+        until: t.Optional[t.Sequence[int]] = None,
     ) -> None:
         self.__name = name
         self.__version_expr = version_expr
@@ -44,7 +45,7 @@ class VersionRange(ConditionalMark):
     def __version_to_str(self, value: t.Sequence[int]) -> str:
         return ".".join(str(val) for val in value)
 
-    @t.override
+    @override
     def build_condition(self) -> str:
         expr = f"{self.__since!r} <= {self.__version_expr}"
 
@@ -53,7 +54,7 @@ class VersionRange(ConditionalMark):
 
         return expr
 
-    @t.override
+    @override
     def to_reason_str(self) -> str:
         text = f"{self.__name} >= {self.__version_to_str(self.__since)}"
 

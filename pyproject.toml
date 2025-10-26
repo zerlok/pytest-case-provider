@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-case-provider"
-version = "0.1.2"
+version = "0.2.0"
 description = "Advanced pytest parametrization plugin that generates test case instances from sync or async factories."
 authors = ["zerlok <danil.troshnev@gmail.com>"]
 readme = "README.md"
@@ -32,8 +32,9 @@ Issues = "https://github.com/zerlok/pytest-case-provider/issues"
 case_provider = "pytest_case_provider.plugin"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.9"
 pytest = "^8"
+typing-extensions = "^4"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.18.2"
@@ -49,7 +50,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py39"
 include = ["src/**/*.py", "tests/**/*.py"]
 force-exclude = true
 line-length = 120

@@ -4,6 +4,8 @@ import typing as t
 
 from pytest_case_provider.case.info import CaseInfo
 
+V_co = t.TypeVar("V_co", covariant=True)
+
 
 class ConditionalMark(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -15,13 +17,13 @@ class ConditionalMark(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class CaseCollector[T](metaclass=abc.ABCMeta):
+class CaseCollector(t.Generic[V_co], metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def collect_cases(self) -> t.Iterable[CaseInfo[T]]:
+    def collect_cases(self) -> t.Iterable[CaseInfo[V_co]]:
         raise NotImplementedError
 
 
-class CaseParametrizer[T](CaseCollector[T], metaclass=abc.ABCMeta):
+class CaseParametrizer(CaseCollector[V_co], metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_case_param(self) -> inspect.Parameter:
         raise NotImplementedError

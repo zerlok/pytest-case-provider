@@ -7,7 +7,7 @@ import pytest
 from pytest_case_provider import inject_cases, inject_cases_method
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class MyCase:
     foo: int
 

@@ -5,9 +5,11 @@ from _pytest.mark import MarkDecorator
 
 from pytest_case_provider.case.provider import CaseProvider
 
+T = t.TypeVar("T")
+
 
 @dataclass(frozen=True)
-class CaseInfo[T]:
+class CaseInfo(t.Generic[T]):
     name: str
     provider: CaseProvider[T]
     marks: t.Sequence[MarkDecorator] = field(default_factory=tuple)
