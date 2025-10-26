@@ -2,6 +2,7 @@
 
 [![Latest Version](https://img.shields.io/pypi/v/pytest-case-provider.svg)](https://pypi.python.org/pypi/pytest-case-provider)
 [![Python Supported Versions](https://img.shields.io/pypi/pyversions/pytest-case-provider.svg)](https://pypi.python.org/pypi/pytest-case-provider)
+![Pytest versions](https://img.shields.io/badge/pytest-8-blue)
 [![MyPy Strict](https://img.shields.io/badge/mypy-strict-blue)](https://mypy.readthedocs.io/en/stable/getting_started.html#strict-mode-and-configuration)
 [![Test Coverage](https://codecov.io/gh/zerlok/pytest-case-provider/branch/main/graph/badge.svg)](https://codecov.io/gh/zerlok/pytest-case-provider)
 [![Downloads](https://img.shields.io/pypi/dm/pytest-case-provider.svg)](https://pypistats.org/packages/pytest-case-provider)

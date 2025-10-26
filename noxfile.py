@@ -17,14 +17,15 @@ class PytestMatrixItem:
 PYTHON_VERSIONS = ["3.12", "3.13", "3.14"]
 
 PYTEST_MATRIX = [
-    # TODO: support older pytest versions
+    # TODO: support older pytest versions, note: pytest-asyncio < 1.0.0 must be used for older pytest; pytest-asyncio
+    #  < 1.0.0 manages async fixtures differently, making it hard to invoke case providers properly.
     # PytestMatrixItem(
     #     name="v6",
     #     python=PYTHON_VERSIONS,
     #     dependencies={
     #         "pytest": "6.2.5",
     #         "pytest-asyncio": "0.20.3",
-    #         "pytest-cov": "5.0.0",
+    #         "pytest-cov": "6.3.0",
     #     },
     # ),
     # PytestMatrixItem(
@@ -33,7 +34,7 @@ PYTEST_MATRIX = [
     #     dependencies={
     #         "pytest": "7.4.4",
     #         "pytest-asyncio": "0.23.8",
-    #         "pytest-cov": "6.0.0",
+    #         "pytest-cov": "6.3.0",
     #     },
     # ),
     PytestMatrixItem(
