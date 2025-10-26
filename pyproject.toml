@@ -40,6 +40,7 @@ mypy = "^1.18.2"
 ruff = "^0.14.1"
 pytest-cov = "^7.0.0"
 pytest-asyncio = "^1.2.0"
+nox = "^2025.10.16"
 
 
 [build-system]
@@ -149,8 +150,8 @@ patch = ["subprocess"]
 exclude_lines = [
     "pragma: no cover",
     "@abc.abstractmethod",
+    "@t.overload",
     "if __name__ == .__main__.:",
     "if t.TYPE_CHECKING:",
-    "@t.overload",
 ]
 show_missing = true

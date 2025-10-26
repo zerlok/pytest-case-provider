@@ -25,13 +25,13 @@ def test_no_case_injected(
 
 @inject_cases
 def test_case_injected(case: MyCase) -> None:
-    assert isinstance(case, MyCase)
+    assert isinstance(case, MyCase), f"case: {type(case)}"
     assert case.foo > 0
 
 
 @inject_cases(test_case_injected)  # include cases from other test
 def test_cases_included_to_fixture(case: MyCase, case_foo_inc: MyCase) -> None:
-    assert isinstance(case, MyCase)
+    assert isinstance(case, MyCase), f"case: {type(case)}"
     assert case.foo + 1 == case_foo_inc.foo
 
 
@@ -50,7 +50,7 @@ def special_number() -> int:
 def case_foo_inc(
     case: MyCase,  # fixture can use case value
 ) -> MyCase:
-    assert isinstance(case, MyCase)
+    assert isinstance(case, MyCase), f"case: {type(case)}"
     return replace(case, foo=case.foo + 1)
 
 
@@ -107,11 +107,11 @@ class TestClass:
 
     @inject_cases_method
     def test_class_case_injected(self, case: MyCase) -> None:
-        assert isinstance(case, MyCase)
+        assert isinstance(case, MyCase), f"case: {type(case)}"
 
     @inject_cases_method(test_class_case_injected)
     def test_class_cases_included(self, case: MyCase) -> None:
-        assert isinstance(case, MyCase)
+        assert isinstance(case, MyCase), f"case: {type(case)}"
 
     @test_class_case_injected.case()
     def case_six(self) -> MyCase:
