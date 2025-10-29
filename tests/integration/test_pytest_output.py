@@ -49,7 +49,7 @@ def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
     [
         pytest.param(
             Path(__file__).parent / "test_inject_cases.py",
-            [],
+            ["--asyncio-mode=auto"],
             Report(
                 passed={
                     "::TestClass::test_class_case_injected[case_class_special_number]",
@@ -136,7 +136,7 @@ def test_inject_case_parametrizes_test_functions(
     report: Report,
 ) -> None:
     path = pytester.makepyfile(path.read_text())
-    result = pytester.runpytest_subprocess("-vvv", "--asyncio-mode=auto", *arguments)
+    result = pytester.runpytest_subprocess("-vvv", *arguments)
 
     assert parse_report(path.name, result.outlines) == report
 

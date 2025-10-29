@@ -159,6 +159,30 @@ class TestClass:
         return MyCase(foo=special_number)
 
 
+# FIXME: make async test functions work with pytest-asyncio
+# @inject_cases_func()
+# async def test_async_func_case_injected(case: MyCase) -> None:
+#     await asyncio.sleep(0.01)
+#     assert isinstance(case, MyCase), f"case: {type(case)}"
+#
+#
+# @test_async_func_case_injected.case()
+# @FEATURE_PYTHON_3.mark_required()
+# async def case_async_nine() -> MyCase:
+#     await asyncio.sleep(0.01)
+#     return MyCase(foo=9)
+#
+#
+# @test_async_func_case_injected.case(
+#     marks=[
+#         FEATURE_PYTHON_3.mark_required(),
+#     ],
+# )
+# async def case_async_yield_ten() -> t.AsyncIterator[MyCase]:
+#     await asyncio.sleep(0.01)
+#     yield MyCase(foo=10)
+#
+#
 class TestClassAsync:
     @inject_cases_method()
     def test_async_class_case_injected(self, case: MyCase) -> None:
