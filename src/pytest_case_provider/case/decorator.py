@@ -76,17 +76,21 @@ class MethodCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.
 
 class TestFuncCaseInjector(t.Generic[T_co]):
     def __init__(self, includes: t.Sequence[CaseCollector[T_co]]) -> None:
-        self.__includes = includes
+        self.__includes = list(includes)
 
     def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseDecorator[U, V_co, T_co]:
         collector = FuncCaseDecorator[U, V_co, T_co](testfunc)
         collector.include(*self.__includes)
         return collector
 
+    def include(self, *others: CaseCollector[T_co]) -> Self:
+        self.__includes.extend(others)
+        return self
+
 
 class TestMethodCaseInjector(t.Generic[T_co]):
     def __init__(self, includes: t.Sequence[CaseCollector[T_co]]) -> None:
-        self.__includes = includes
+        self.__includes = list(includes)
 
     def __call__(
         self,
@@ -96,44 +100,33 @@ class TestMethodCaseInjector(t.Generic[T_co]):
         collector.include(*self.__includes)
         return collector
 
-
-@t.overload
-def inject_cases(testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseDecorator[U, V_co, T_co]: ...
-
-
-@t.overload
-def inject_cases(*includes: CaseCollector[T_co]) -> TestFuncCaseInjector[T_co]: ...
+    def include(self, *others: CaseCollector[T_co]) -> Self:
+        self.__includes.extend(others)
+        return self
 
 
-def inject_cases(
-    testfunc: t.Union[t.Callable[Concatenate[T_co, U], V_co], CaseCollector[T_co], None] = None,
-    *includes: CaseCollector[T_co],
-) -> t.Union[FuncCaseDecorator[U, V_co, T_co], TestFuncCaseInjector[T_co]]:
-    if isinstance(testfunc, CaseCollector):
-        return TestFuncCaseInjector((testfunc, *includes))
+class TestFuncCaseInjectorPlaceholder:
+    def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseDecorator[U, V_co, T_co]:
+        return self.include()(testfunc)
 
-    else:
-        injector = TestFuncCaseInjector(includes)
-        return injector(testfunc) if testfunc is not None else injector
+    def include(self, *others: CaseCollector[T_co]) -> TestFuncCaseInjector[T_co]:
+        return TestFuncCaseInjector(includes=others)
 
 
-@t.overload
-def inject_cases_method(
-    testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
-) -> MethodCaseDecorator[U, V_co, T_co, S_contra]: ...
+class TestMethodCaseInjectorPlaceholder:
+    def __call__(
+        self,
+        testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
+    ) -> MethodCaseDecorator[U, V_co, T_co, S_contra]:
+        return self.include()(testmethod)
+
+    def include(self, *others: CaseCollector[T_co]) -> TestMethodCaseInjector[T_co]:
+        return TestMethodCaseInjector(includes=others)
 
 
-@t.overload
-def inject_cases_method(*includes: CaseCollector[T_co]) -> TestMethodCaseInjector[T_co]: ...
+def inject_cases() -> TestFuncCaseInjectorPlaceholder:
+    return TestFuncCaseInjectorPlaceholder()
 
 
-def inject_cases_method(
-    testmethod: t.Union[t.Callable[Concatenate[S_contra, T_co, U], V_co], CaseCollector[T_co], None] = None,
-    *includes: CaseCollector[T_co],
-) -> t.Union[MethodCaseDecorator[U, V_co, T_co, S_contra], TestMethodCaseInjector[T_co]]:
-    if isinstance(testmethod, CaseCollector):
-        return TestMethodCaseInjector((testmethod, *includes))
-
-    else:
-        injector = TestMethodCaseInjector(includes)
-        return injector(testmethod) if testmethod is not None else injector
+def inject_cases_method() -> TestMethodCaseInjectorPlaceholder:
+    return TestMethodCaseInjectorPlaceholder()
