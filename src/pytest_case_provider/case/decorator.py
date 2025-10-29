@@ -1,6 +1,6 @@
 import inspect
 import typing as t
-from functools import partial, update_wrapper, wraps
+from functools import WRAPPER_ASSIGNMENTS, partial, update_wrapper, wraps
 
 from typing_extensions import Concatenate, ParamSpec, Self, override
 
@@ -13,11 +13,15 @@ T_co = t.TypeVar("T_co", covariant=True)
 S_contra = t.TypeVar("S_contra", contravariant=True)
 
 
+# NOTE: `__globals__` is used by pytest marks such as `pytest.mark.skipif` to evaluate string condition.
+_TEST_FUNC_WRAPPER_ASSIGNMENT: t.Final[t.Sequence[str]] = [*WRAPPER_ASSIGNMENTS, "__globals__"]
+
+
 class FuncCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co]):
     def __init__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> None:
         super().__init__()
         self.__testfunc = testfunc
-        update_wrapper(self, self.__testfunc)
+        update_wrapper(self, self.__testfunc, assigned=_TEST_FUNC_WRAPPER_ASSIGNMENT)
 
     @override
     def __str__(self) -> str:
@@ -53,7 +57,11 @@ class MethodCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.
         instance: t.Optional[S_contra],
         owner: type[S_contra],
     ) -> t.Union[Self, t.Callable[Concatenate[T_co, U], V_co]]:
-        return wraps(self.__testmethod)(partial(self, instance)) if instance is not None else self
+        return (
+            wraps(self.__testmethod, assigned=_TEST_FUNC_WRAPPER_ASSIGNMENT)(partial(self, instance))
+            if instance is not None
+            else self
+        )
 
     def __call__(self, instance: S_contra, *args: U.args, **kwargs: U.kwargs) -> V_co:
         # NOTE: `T` should be provided in `kwargs` by pytest fixture injection

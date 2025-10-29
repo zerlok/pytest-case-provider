@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 import pytest
 
 from pytest_case_provider import inject_cases, inject_cases_method
+from tests.stub.feature import FEATURE_PYTHON_3
 
 
 @dataclass(frozen=True)
@@ -64,7 +65,11 @@ def case_two() -> MyCase:
     return MyCase(foo=2)
 
 
-@test_case_injected.case()
+@test_case_injected.case(
+    marks=[
+        FEATURE_PYTHON_3.mark_required(),
+    ],
+)
 async def case_async_three_for_sync_test() -> MyCase:
     await asyncio.sleep(0.01)
     return MyCase(foo=3)
@@ -75,7 +80,11 @@ def case_yield_four() -> t.Iterator[MyCase]:
     yield MyCase(foo=4)
 
 
-@test_case_injected.case()
+@test_case_injected.case(
+    marks=[
+        FEATURE_PYTHON_3.mark_required(),
+    ],
+)
 async def case_async_yield_five_for_sync_test() -> t.AsyncIterator[MyCase]:
     await asyncio.sleep(0.01)
     yield MyCase(foo=5)
@@ -128,3 +137,27 @@ class TestClass:
     @test_class_case_injected.case()
     def case_class_special_number(self, special_number: int) -> MyCase:
         return MyCase(foo=special_number)
+
+
+class TestClassAsync:
+    @inject_cases_method
+    def test_async_class_case_injected(self, case: MyCase) -> None:
+        assert isinstance(case, MyCase), f"case: {type(case)}"
+
+    @test_async_class_case_injected.case(
+        marks=[
+            FEATURE_PYTHON_3.mark_required(),
+        ],
+    )
+    async def case_async_nine(self) -> MyCase:
+        await asyncio.sleep(0.01)
+        return MyCase(foo=7)
+
+    @test_async_class_case_injected.case(
+        marks=[
+            FEATURE_PYTHON_3.mark_required(),
+        ],
+    )
+    async def case_async_yield_ten(self) -> t.AsyncIterator[MyCase]:
+        await asyncio.sleep(0.01)
+        yield MyCase(foo=8)

@@ -60,6 +60,8 @@ def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
                     "::TestClass::test_class_cases_included[case_six]",
                     "::TestClass::test_class_cases_included[case_yield_eight]",
                     "::TestClass::test_without_case_injection",
+                    "::TestClassAsync::test_async_class_case_injected[case_async_nine]",
+                    "::TestClassAsync::test_async_class_case_injected[case_async_yield_ten]",
                     "::test_case_injected[case_async_three_for_sync_test]",
                     "::test_case_injected[case_async_yield_five_for_sync_test]",
                     "::test_case_injected[case_one]",
