@@ -45,7 +45,10 @@ class FuncCaseStorage(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Gene
     def __init__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> None:
         super().__init__()
         self.__testfunc = testfunc
+
         update_wrapper(self, self.__testfunc, assigned=_TEST_FUNC_WRAPPER_ASSIGNMENT)
+        if inspect.iscoroutinefunction(self.__testfunc):
+            inspect.markcoroutinefunction(self)
 
     @override
     def __str__(self) -> str:
@@ -72,7 +75,10 @@ class MethodCaseStorage(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Ge
     def __init__(self, testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co]) -> None:
         super().__init__()
         self.__testmethod = testmethod
+
         update_wrapper(self, self.__testmethod)
+        if inspect.iscoroutinefunction(self.__testmethod):
+            inspect.markcoroutinefunction(self)
 
     @override
     def __str__(self) -> str:
@@ -153,10 +159,7 @@ class FuncCaseStorageProviderPlaceholder:
         return self.include()(testfunc)
 
     def include(self, *others: CaseCollector[T_co]) -> FuncCaseStorageProvider[T_co]:
-        return FuncCaseStorageProvider(
-            decorators=self.__decorators,
-            includes=others,
-        )
+        return FuncCaseStorageProvider[T_co](decorators=self.__decorators, includes=others)
 
 
 class MethodCaseStorageProviderPlaceholder:
@@ -172,7 +175,7 @@ class MethodCaseStorageProviderPlaceholder:
         return self.include()(testmethod)
 
     def include(self, *others: CaseCollector[T_co]) -> MethodCaseStorageProvider[T_co]:
-        return MethodCaseStorageProvider(decorators=self.__decorators, includes=others)
+        return MethodCaseStorageProvider[T_co](decorators=self.__decorators, includes=others)
 
 
 def inject_cases_func(
@@ -183,6 +186,24 @@ def inject_cases_func(
 
     :param marks: list of pytest marks to apply on test function (useful when marks are not well annotated for MyPy).
     :return: a placeholder object that can wrap the test function.
+
+    Usage:
+
+    >>> @inject_cases_func()
+    ... def test_func(case: str) -> None: # test_func expects cases of type `str`
+    ...     assert case == "Foo"
+    ...
+    >>> @test_func.case() # add case to `test_func` storage
+    ... def case_foo() -> str:
+    ...     return "Foo"
+    ...
+    >>> @inject_cases_func.include(test_func) # `test_func_2` includes cases from `test_func`
+    ... def test_func_2(case: str) -> None:
+    ...     assert case in {"Foo", "Bar"}
+    ...
+    >>> @test_func_2.case() # add case to `test_func_2` storage
+    ... def case_bar() -> str:
+    ...     return "Bar"
     """
     return FuncCaseStorageProviderPlaceholder(FuncDecorator(marks))
 
@@ -195,5 +216,24 @@ def inject_cases_method(
 
     :param marks: list of pytest marks to apply on test method (useful when marks are not well annotated for MyPy).
     :return: a placeholder object that can wrap the test method.
+
+    Usage:
+
+    >>> class TestClass:
+    ...     @inject_cases_method()
+    ...     def test_method(self, case: str) -> None: # test_method expects cases of type `str`
+    ...         assert case == "Foo"
+    ...
+    ...     @test_method.case() # add case to `test_method` storage
+    ...     def case_foo(self) -> str:
+    ...         return "Foo"
+    ...
+    ...     @inject_cases_method.include(test_method) # `test_method_2` includes cases from `test_method`
+    ...     def test_method_2(self, case: str) -> None:
+    ...         assert case in {"Foo", "Bar"}
+    ...
+    ...     @test_method_2.case() # add case to `test_method_2` storage
+    ...     def case_bar(self) -> str:
+    ...         return "Bar"
     """
     return MethodCaseStorageProviderPlaceholder(FuncDecorator(marks))
