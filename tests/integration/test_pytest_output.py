@@ -86,7 +86,30 @@ def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
                 xfail=set(),
                 xpass=set(),
             ),
-        )
+            id="test_inject_case.py report",
+        ),
+        pytest.param(
+            Path(__file__).parent / "test_marks.py",
+            Report(
+                passed={
+                    "::test_obsoletes_python2",
+                    "::test_requires_python3",
+                    "::test_runs_only_when_bar_toggle_on",
+                    "::test_runs_only_when_foo_toggle_off",
+                },
+                skipped={
+                    "::test_obsoletes_python3",
+                    "::test_requires_python2",
+                    "::test_runs_only_when_bar_toggle_off",
+                    "::test_runs_only_when_foo_toggle_on",
+                },
+                failed=set(),
+                error=set(),
+                xfail=set(),
+                xpass=set(),
+            ),
+            id="test_marks.py report",
+        ),
     ],
 )
 def test_inject_case_parametrizes_test_functions(pytester: Pytester, path: Path, report: Report) -> None:
