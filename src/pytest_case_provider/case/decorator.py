@@ -2,6 +2,7 @@ import inspect
 import typing as t
 from functools import WRAPPER_ASSIGNMENTS, partial, update_wrapper, wraps
 
+from _pytest.mark import MarkDecorator
 from typing_extensions import Concatenate, ParamSpec, Self, override
 
 from pytest_case_provider.abc import CaseCollector, CaseParametrizer
@@ -21,20 +22,26 @@ _TEST_FUNC_WRAPPER_ASSIGNMENT: t.Final[t.Sequence[str]] = [*WRAPPER_ASSIGNMENTS,
 class FuncDecorator:
     def __init__(
         self,
-        # FIXME: make more strict typing
-        # NOTE: each wrapper must be a `t.Callable[[F], F]`, but `F` type var should be evaluated only in `apply` func.
-        wrappers: t.Sequence[t.Callable[..., t.Any]],
+        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
     ) -> None:
-        self.__wrappers = wrappers
+        self.__marks = marks
 
     def apply(self, func: F) -> F:
-        for wrapper in self.__wrappers:
-            func = wrapper(func)
+        for mark in self.__marks or ():
+            func = t.cast("F", mark(func))
 
         return func
 
 
-class FuncCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co]):
+class FuncCaseStorage(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co]):
+    """
+    Stores cases of a specific type `T_co` for a specific test function.
+
+    Instances of this class are intended to be collected by pytest to generate test for each case.
+
+    During pytest test run this object delegates the call to actual test function.
+    """
+
     def __init__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> None:
         super().__init__()
         self.__testfunc = testfunc
@@ -53,7 +60,15 @@ class FuncCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Ge
         return next(iter(inspect.signature(self.__testfunc).parameters.values()))
 
 
-class MethodCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co, S_contra]):
+class MethodCaseStorage(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co, S_contra]):
+    """
+    Stores cases of a specific type `T_co` for a specific test method.
+
+    Instances of this class are intended to be collected by pytest to generate test for each case.
+
+    During pytest test run this object delegates the call to actual test method.
+    """
+
     def __init__(self, testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co]) -> None:
         super().__init__()
         self.__testmethod = testmethod
@@ -91,7 +106,9 @@ class MethodCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.
         return next(params)
 
 
-class TestFuncCaseInjector(t.Generic[T_co]):
+class FuncCaseStorageProvider(t.Generic[T_co]):
+    """Provides `FuncCaseStorage` objects of a specific `T_co` case type."""
+
     def __init__(
         self,
         decorators: FuncDecorator,
@@ -100,17 +117,15 @@ class TestFuncCaseInjector(t.Generic[T_co]):
         self.__decorators = decorators
         self.__includes = list(includes)
 
-    def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseDecorator[U, V_co, T_co]:
-        collector = FuncCaseDecorator[U, V_co, T_co](self.__decorators.apply(testfunc))
-        collector.include(*self.__includes)
-        return collector
-
-    def include(self, *others: CaseCollector[T_co]) -> Self:
-        self.__includes.extend(others)
-        return self
+    def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseStorage[U, V_co, T_co]:
+        storage = FuncCaseStorage[U, V_co, T_co](self.__decorators.apply(testfunc))
+        storage.include(*self.__includes)
+        return storage
 
 
-class TestMethodCaseInjector(t.Generic[T_co]):
+class MethodCaseStorageProvider(t.Generic[T_co]):
+    """Provides `MethodCaseStorage` objects of a specific `T_co` case type."""
+
     def __init__(
         self,
         decorators: FuncDecorator,
@@ -122,47 +137,63 @@ class TestMethodCaseInjector(t.Generic[T_co]):
     def __call__(
         self,
         testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
-    ) -> MethodCaseDecorator[U, V_co, T_co, S_contra]:
-        collector = MethodCaseDecorator[U, V_co, T_co, S_contra](self.__decorators.apply(testmethod))
-        collector.include(*self.__includes)
-        return collector
-
-    def include(self, *others: CaseCollector[T_co]) -> Self:
-        self.__includes.extend(others)
-        return self
+    ) -> MethodCaseStorage[U, V_co, T_co, S_contra]:
+        storage = MethodCaseStorage[U, V_co, T_co, S_contra](self.__decorators.apply(testmethod))
+        storage.include(*self.__includes)
+        return storage
 
 
-class TestFuncCaseInjectorPlaceholder:
+class FuncCaseStorageProviderPlaceholder:
+    """A helper to infer `FuncCaseStorageProvider` type vars when test function is wrapped with python `@` syntax."""
+
     def __init__(self, decorators: FuncDecorator) -> None:
         self.__decorators = decorators
 
-    def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseDecorator[U, V_co, T_co]:
+    def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseStorage[U, V_co, T_co]:
         return self.include()(testfunc)
 
-    def include(self, *others: CaseCollector[T_co]) -> TestFuncCaseInjector[T_co]:
-        return TestFuncCaseInjector(
+    def include(self, *others: CaseCollector[T_co]) -> FuncCaseStorageProvider[T_co]:
+        return FuncCaseStorageProvider(
             decorators=self.__decorators,
             includes=others,
         )
 
 
-class TestMethodCaseInjectorPlaceholder:
+class MethodCaseStorageProviderPlaceholder:
+    """A helper to infer `MethodCaseStorageProvider` type vars when test function is wrapped with python `@` syntax."""
+
     def __init__(self, decorators: FuncDecorator) -> None:
         self.__decorators = decorators
 
     def __call__(
         self,
         testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
-    ) -> MethodCaseDecorator[U, V_co, T_co, S_contra]:
+    ) -> MethodCaseStorage[U, V_co, T_co, S_contra]:
         return self.include()(testmethod)
 
-    def include(self, *others: CaseCollector[T_co]) -> TestMethodCaseInjector[T_co]:
-        return TestMethodCaseInjector(decorators=self.__decorators, includes=others)
+    def include(self, *others: CaseCollector[T_co]) -> MethodCaseStorageProvider[T_co]:
+        return MethodCaseStorageProvider(decorators=self.__decorators, includes=others)
 
 
-def inject_cases(*decorators: t.Callable[[F], F]) -> TestFuncCaseInjectorPlaceholder:
-    return TestFuncCaseInjectorPlaceholder(FuncDecorator(decorators))
+def inject_cases_func(
+    marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+) -> FuncCaseStorageProviderPlaceholder:
+    """
+    Setup case provider injection into the test function.
+
+    :param marks: list of pytest marks to apply on test function (useful when marks are not well annotated for MyPy).
+    :return: a placeholder object that can wrap the test function.
+    """
+    return FuncCaseStorageProviderPlaceholder(FuncDecorator(marks))
 
 
-def inject_cases_method(*decorators: t.Callable[[F], F]) -> TestMethodCaseInjectorPlaceholder:
-    return TestMethodCaseInjectorPlaceholder(FuncDecorator(decorators))
+def inject_cases_method(
+    marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+) -> MethodCaseStorageProviderPlaceholder:
+    """
+    Setup case provider injection into the test method.
+
+    :param marks: list of pytest marks to apply on test method (useful when marks are not well annotated for MyPy).
+    :return: a placeholder object that can wrap the test method.
+    """
+    return MethodCaseStorageProviderPlaceholder(FuncDecorator(marks))

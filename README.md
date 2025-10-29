@@ -9,7 +9,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/zerlok/pytest-case-provider)](https://github.com/zerlok/pytest-case-provider/stargazers)
 
 Case parametrization for `pytest` with **fixture**, **class**, and **async** support.
-Provides **declarative**, **typed** case injection for both sync and async test functions.
+Provides **declarative**, **typed**, **on demand** case injection for both sync and async test functions.
 
 ---
 
@@ -18,7 +18,7 @@ Provides **declarative**, **typed** case injection for both sync and async test 
 `pytest-case-provider` extends pytest’s parametrization system.  
 It was **inspired by** [`pytest-cases`](https://smarie.github.io/python-pytest-cases/), but redesigned from scratch for **strict typing**, **async support**, and **fixture-native case injection**.
 
-It allows attaching *case providers* directly to test functions or methods via `@inject_cases` and  
+It allows attaching *case providers* directly to test functions or methods via `@inject_cases_func` and  
 `@inject_cases_method`.
 
 Cases can be:
@@ -34,7 +34,7 @@ Cases can be:
 
 | Symbol                    | Description                           |
 |---------------------------|---------------------------------------|
-| `inject_cases`            | Decorator/injector for test functions |
+| `inject_cases_func`       | Decorator/injector for test functions |
 | `inject_cases_method`     | Same as above, for test class methods |
 | `CaseStorage[T]`          | Mutable case storage container        |
 | `CompositeCaseStorage[T]` | Aggregates multiple `CaseCollector`   |
@@ -55,7 +55,7 @@ pip install pytest-case-provider
 import typing
 from dataclasses import dataclass, replace
 import pytest
-from pytest_case_provider import inject_cases, inject_cases_method
+from pytest_case_provider import inject_cases_func, inject_cases_method
 
 
 @dataclass(frozen=True)
@@ -74,13 +74,13 @@ def test_without_case_injection() -> None:
 
 
 # Case-enabled test function
-@inject_cases
+@inject_cases_func()
 def test_case_injected(case: MyCase) -> None:
     assert isinstance(case, MyCase)
 
 
 # Cross-inject from another test
-@inject_cases(test_case_injected)
+@inject_cases_func.include(test_case_injected)
 def test_case_increment(case: MyCase, case_foo_inc: MyCase) -> None:
     assert case.foo + 1 == case_foo_inc.foo
 
@@ -128,7 +128,7 @@ def case_foo_inc(case: MyCase) -> MyCase:
 
 # Example class-based usage
 class TestClass:
-    @inject_cases_method
+    @inject_cases_method()
     def test_class_cases(self, case: MyCase) -> None:
         assert isinstance(case, MyCase)
 

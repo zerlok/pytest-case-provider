@@ -9,11 +9,13 @@ from pytest_case_provider.case.provider import CaseProvider
 from pytest_case_provider.fixture import parametrize_metafunc_with_fixture_params
 
 
-class CaseFixtureTestGenerator:
+class CaseParametrizedTestGenerator:
+    """Generates test functions for each case accordingly using pytest's parametrize feature."""
+
     def generate(self, metafunc: Metafunc) -> None:
         func = metafunc.function
 
-        # TODO: traverse each fixture and apply case parametrization to fixtures, but only once
+        # TODO: consider case injection into pytest fixtures directly.
 
         if isinstance(func, CaseParametrizer):
             # TODO: deduplicate cases
