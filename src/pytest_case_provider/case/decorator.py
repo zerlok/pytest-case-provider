@@ -8,6 +8,7 @@ from pytest_case_provider.abc import CaseCollector, CaseParametrizer
 from pytest_case_provider.case.storage import CompositeCaseStorage
 
 U = ParamSpec("U")
+F = t.TypeVar("F")
 V_co = t.TypeVar("V_co", covariant=True)
 T_co = t.TypeVar("T_co", covariant=True)
 S_contra = t.TypeVar("S_contra", contravariant=True)
@@ -15,6 +16,22 @@ S_contra = t.TypeVar("S_contra", contravariant=True)
 
 # NOTE: `__globals__` is used by pytest marks such as `pytest.mark.skipif` to evaluate string condition.
 _TEST_FUNC_WRAPPER_ASSIGNMENT: t.Final[t.Sequence[str]] = [*WRAPPER_ASSIGNMENTS, "__globals__"]
+
+
+class FuncDecorator:
+    def __init__(
+        self,
+        # FIXME: make more strict typing
+        # NOTE: each wrapper must be a `t.Callable[[F], F]`, but `F` type var should be evaluated only in `apply` func.
+        wrappers: t.Sequence[t.Callable[..., t.Any]],
+    ) -> None:
+        self.__wrappers = wrappers
+
+    def apply(self, func: F) -> F:
+        for wrapper in self.__wrappers:
+            func = wrapper(func)
+
+        return func
 
 
 class FuncCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co]):
@@ -75,11 +92,16 @@ class MethodCaseDecorator(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.
 
 
 class TestFuncCaseInjector(t.Generic[T_co]):
-    def __init__(self, includes: t.Sequence[CaseCollector[T_co]]) -> None:
+    def __init__(
+        self,
+        decorators: FuncDecorator,
+        includes: t.Sequence[CaseCollector[T_co]],
+    ) -> None:
+        self.__decorators = decorators
         self.__includes = list(includes)
 
     def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseDecorator[U, V_co, T_co]:
-        collector = FuncCaseDecorator[U, V_co, T_co](testfunc)
+        collector = FuncCaseDecorator[U, V_co, T_co](self.__decorators.apply(testfunc))
         collector.include(*self.__includes)
         return collector
 
@@ -89,14 +111,19 @@ class TestFuncCaseInjector(t.Generic[T_co]):
 
 
 class TestMethodCaseInjector(t.Generic[T_co]):
-    def __init__(self, includes: t.Sequence[CaseCollector[T_co]]) -> None:
+    def __init__(
+        self,
+        decorators: FuncDecorator,
+        includes: t.Sequence[CaseCollector[T_co]],
+    ) -> None:
+        self.__decorators = decorators
         self.__includes = list(includes)
 
     def __call__(
         self,
         testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
     ) -> MethodCaseDecorator[U, V_co, T_co, S_contra]:
-        collector = MethodCaseDecorator[U, V_co, T_co, S_contra](testmethod)
+        collector = MethodCaseDecorator[U, V_co, T_co, S_contra](self.__decorators.apply(testmethod))
         collector.include(*self.__includes)
         return collector
 
@@ -106,14 +133,23 @@ class TestMethodCaseInjector(t.Generic[T_co]):
 
 
 class TestFuncCaseInjectorPlaceholder:
+    def __init__(self, decorators: FuncDecorator) -> None:
+        self.__decorators = decorators
+
     def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseDecorator[U, V_co, T_co]:
         return self.include()(testfunc)
 
     def include(self, *others: CaseCollector[T_co]) -> TestFuncCaseInjector[T_co]:
-        return TestFuncCaseInjector(includes=others)
+        return TestFuncCaseInjector(
+            decorators=self.__decorators,
+            includes=others,
+        )
 
 
 class TestMethodCaseInjectorPlaceholder:
+    def __init__(self, decorators: FuncDecorator) -> None:
+        self.__decorators = decorators
+
     def __call__(
         self,
         testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
@@ -121,12 +157,12 @@ class TestMethodCaseInjectorPlaceholder:
         return self.include()(testmethod)
 
     def include(self, *others: CaseCollector[T_co]) -> TestMethodCaseInjector[T_co]:
-        return TestMethodCaseInjector(includes=others)
+        return TestMethodCaseInjector(decorators=self.__decorators, includes=others)
 
 
-def inject_cases() -> TestFuncCaseInjectorPlaceholder:
-    return TestFuncCaseInjectorPlaceholder()
+def inject_cases(*decorators: t.Callable[[F], F]) -> TestFuncCaseInjectorPlaceholder:
+    return TestFuncCaseInjectorPlaceholder(FuncDecorator(decorators))
 
 
-def inject_cases_method() -> TestMethodCaseInjectorPlaceholder:
-    return TestMethodCaseInjectorPlaceholder()
+def inject_cases_method(*decorators: t.Callable[[F], F]) -> TestMethodCaseInjectorPlaceholder:
+    return TestMethodCaseInjectorPlaceholder(FuncDecorator(decorators))

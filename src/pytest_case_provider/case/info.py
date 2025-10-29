@@ -1,7 +1,7 @@
 import typing as t
 from dataclasses import dataclass, field
 
-from _pytest.mark import MarkDecorator
+from _pytest.mark import Mark, MarkDecorator
 
 from pytest_case_provider.case.provider import CaseProvider
 
@@ -12,4 +12,4 @@ T = t.TypeVar("T")
 class CaseInfo(t.Generic[T]):
     name: str
     provider: CaseProvider[T]
-    marks: t.Sequence[MarkDecorator] = field(default_factory=tuple)
+    marks: t.Sequence[t.Union[Mark, MarkDecorator]] = field(default_factory=tuple)

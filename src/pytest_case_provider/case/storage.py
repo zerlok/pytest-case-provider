@@ -2,6 +2,7 @@ import typing as t
 from itertools import chain
 
 from _pytest.mark import MarkDecorator
+from _pytest.mark.structures import Mark, get_unpacked_marks
 from typing_extensions import ParamSpec, Self, override
 
 from pytest_case_provider.abc import CaseCollector
@@ -35,13 +36,13 @@ class CaseStorage(CaseCollector[V_co]):
         self,
         provider: CaseProviderFunc[U, V_co],
         name: t.Optional[str] = None,
-        marks: t.Optional[t.Sequence[MarkDecorator]] = None,
+        marks: t.Optional[t.Sequence[t.Union[Mark, MarkDecorator]]] = None,
     ) -> Self:
         self.__cases.append(
             CaseInfo(
                 name=name or provider.__name__,
                 provider=CaseProvider(provider),
-                marks=marks or (),
+                marks=marks if marks is not None else get_unpacked_marks(provider),
             )
         )
         return self

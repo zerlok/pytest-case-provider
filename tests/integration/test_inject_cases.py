@@ -19,7 +19,7 @@ def test_without_case_injection() -> None:
 
 @inject_cases()
 def test_no_case_injected(
-    case: MyCase,  # noqa: ARG001
+    case: MyCase,
 ) -> None:
     pytest.fail("this test should not run, because it has no cases")
 
@@ -65,11 +65,8 @@ def case_two() -> MyCase:
     return MyCase(foo=2)
 
 
-@test_case_injected.case(
-    marks=[
-        FEATURE_PYTHON_3.mark_required(),
-    ],
-)
+@test_case_injected.case()
+@FEATURE_PYTHON_3.mark_required()
 async def case_async_three_for_sync_test() -> MyCase:
     await asyncio.sleep(0.01)
     return MyCase(foo=3)
@@ -80,11 +77,8 @@ def case_yield_four() -> t.Iterator[MyCase]:
     yield MyCase(foo=4)
 
 
-@test_case_injected.case(
-    marks=[
-        FEATURE_PYTHON_3.mark_required(),
-    ],
-)
+@test_case_injected.case()
+@FEATURE_PYTHON_3.mark_required()
 async def case_async_yield_five_for_sync_test() -> t.AsyncIterator[MyCase]:
     await asyncio.sleep(0.01)
     yield MyCase(foo=5)
@@ -102,8 +96,27 @@ def case_special_number(
         pytest.mark.skip(reason="test case mark works"),
     ]
 )
-def case_skipped() -> MyCase:
+def case_skipped_mark_param() -> MyCase:
     pytest.fail("this test should not run, because case provider has skip mark")
+
+
+@test_case_injected.case()
+@pytest.mark.skip(reason="test case mark decorators work")
+def case_skipped_decorator() -> MyCase:
+    pytest.fail("this test should not run, because case provider has skip mark")
+
+
+@inject_cases()
+@pytest.mark.parametrize("foo", [1, 2, 3])
+def test_parametrized_foo_case_injected(case: MyCase, foo: int) -> None:
+    assert isinstance(case, MyCase), f"case: {type(case)}"
+    assert case.foo == foo
+    assert True
+
+
+@test_parametrized_foo_case_injected.case()
+def case_parametrize_foo(foo: int) -> MyCase:
+    return MyCase(foo=foo)
 
 
 class TestClass:
@@ -144,11 +157,8 @@ class TestClassAsync:
     def test_async_class_case_injected(self, case: MyCase) -> None:
         assert isinstance(case, MyCase), f"case: {type(case)}"
 
-    @test_async_class_case_injected.case(
-        marks=[
-            FEATURE_PYTHON_3.mark_required(),
-        ],
-    )
+    @test_async_class_case_injected.case()
+    @FEATURE_PYTHON_3.mark_required()
     async def case_async_nine(self) -> MyCase:
         await asyncio.sleep(0.01)
         return MyCase(foo=7)
