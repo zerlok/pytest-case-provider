@@ -20,7 +20,6 @@ class CaseParametrizedTestGenerator:
         config: t.Optional[CaseConfig[object]] = extract_case_config(metafunc.function)
 
         if config is not None:
-            # TODO: deduplicate cases
             cases = list(config.storage.collect_cases())
             is_async = any(case.provider.is_async for case in cases)
 

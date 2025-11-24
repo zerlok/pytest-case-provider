@@ -2,7 +2,6 @@ import abc
 import inspect
 import typing as t
 from dataclasses import dataclass
-from itertools import chain
 
 from _pytest.mark import MarkDecorator
 from _pytest.mark.structures import Mark, get_unpacked_marks
@@ -70,7 +69,13 @@ class CompositeCaseStorage(CaseCollector[T]):
 
     @override
     def collect_cases(self) -> t.Iterable[CaseInfo[T]]:
-        return chain.from_iterable(store.collect_cases() for store in self.__substores)
+        known = set[CaseProvider[T]]()
+
+        for store in self.__substores:
+            for case in store.collect_cases():
+                if case.provider not in known:
+                    known.add(case.provider)
+                    yield case
 
     def case(
         self,
