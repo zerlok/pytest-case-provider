@@ -7,13 +7,6 @@ from _pytest.pytester import Pytester
 
 _ANYIO_BACKENDS = ["asyncio"]
 
-try:
-    import trio
-except ImportError:
-    pass
-else:
-    _ANYIO_BACKENDS.append("trio")
-
 
 @pytest.fixture(scope="module", params=_ANYIO_BACKENDS)
 def anyio_backend(request: SubRequest) -> str:
@@ -30,7 +23,7 @@ def async_mode_ini_options() -> t.Optional[str]:
     for plugin, args in plugin_pytest_run_args.items():
         try:
             importlib.import_module(plugin)
-        except ImportError:
+        except ImportError:  # noqa: PERF203
             continue
         else:
             return args

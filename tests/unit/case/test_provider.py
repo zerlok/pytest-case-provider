@@ -33,7 +33,7 @@ _SPECIAL_INT_VALUE = _SIMPLE_INT_VALUE**2
         provide_fixture_int_async_iter,
     ],
 )
-def test_case_provider_to_str(  # type: ignore[misc]
+def test_case_provider_to_str(
     provider: CaseProvider[int],
     func: CaseProviderFunc[t.Any, int],
 ) -> None:
@@ -53,7 +53,7 @@ def test_case_provider_to_str(  # type: ignore[misc]
         provide_fixture_int_async_iter,
     ],
 )
-def test_case_provider_signature(  # type: ignore[misc]
+def test_case_provider_signature(
     provider: CaseProvider[int],
     func: CaseProviderFunc[t.Any, int],
 ) -> None:

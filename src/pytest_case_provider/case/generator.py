@@ -4,28 +4,29 @@ from _pytest.fixtures import SubRequest
 from _pytest.mark import ParameterSet
 from _pytest.python import Metafunc
 
-from pytest_case_provider.abc import CaseParametrizer
+from pytest_case_provider.case.decorator import extract_case_config
 from pytest_case_provider.case.provider import CaseProvider
 from pytest_case_provider.fixture import parametrize_metafunc_with_fixture_params
+
+if t.TYPE_CHECKING:
+    from pytest_case_provider.case.storage import CaseConfig
 
 
 class CaseParametrizedTestGenerator:
     """Generates test functions for each case accordingly using pytest's parametrize feature."""
 
+    # TODO: consider case injection into pytest fixtures directly.
     def generate(self, metafunc: Metafunc) -> None:
-        func = metafunc.function
+        config: t.Optional[CaseConfig[object]] = extract_case_config(metafunc.function)
 
-        # TODO: consider case injection into pytest fixtures directly.
-
-        if isinstance(func, CaseParametrizer):
+        if config is not None:
             # TODO: deduplicate cases
-            cases = list(func.collect_cases())
-            case_param = func.get_case_param()
+            cases = list(config.storage.collect_cases())
             is_async = any(case.provider.is_async for case in cases)
 
             parametrize_metafunc_with_fixture_params(
                 metafunc=metafunc,
-                name=case_param.name,
+                name=config.case_parameter.name,
                 fixture_func=_invoke_provider_async if is_async else _invoke_provider,
                 params=[
                     ParameterSet.param(
