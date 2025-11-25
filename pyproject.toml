@@ -144,7 +144,6 @@ testpaths = [
     "tests",
 ]
 asyncio_mode = "auto"
-anyio_mode = "auto"
 
 [tool.coverage.run]
 branch = true
