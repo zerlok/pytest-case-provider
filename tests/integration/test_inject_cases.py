@@ -98,11 +98,7 @@ def case_special_number(
     return MyCase(foo=special_number)
 
 
-@test_case_injected.case(
-    marks=[
-        pytest.mark.skip(reason="test case mark works"),
-    ]
-)
+@test_case_injected.case(marks=[pytest.mark.skip(reason="test case mark works")])
 def case_skipped_mark_param() -> MyCase:
     pytest.fail("this test should not run, because case provider has skip mark")
 
@@ -159,22 +155,42 @@ class TestClass:
         return MyCase(foo=special_number)
 
 
+# FIXME: make async test functions work with pytest-asyncio
+@inject_cases_func()
+async def test_async_func_case_injected(case: MyCase) -> None:
+    await asyncio.sleep(0.01)
+    assert isinstance(case, MyCase), f"case: {type(case)}"
+
+
+@test_async_func_case_injected.case()
+@FEATURE_PYTHON_3.mark_required()
+async def case_async_nine() -> MyCase:
+    await asyncio.sleep(0.01)
+    return MyCase(foo=9)
+
+
+@test_async_func_case_injected.case(
+    marks=[FEATURE_PYTHON_3.mark_required()],
+)
+async def case_async_yield_ten() -> t.AsyncIterator[MyCase]:
+    await asyncio.sleep(0.01)
+    yield MyCase(foo=10)
+
+
 class TestClassAsync:
     @inject_cases_method()
-    def test_async_class_case_injected(self, case: MyCase) -> None:
+    async def test_async_class_case_injected(self, case: MyCase) -> None:
         assert isinstance(case, MyCase), f"case: {type(case)}"
 
     @test_async_class_case_injected.case()
     @FEATURE_PYTHON_3.mark_required()
-    async def case_async_nine(self) -> MyCase:
+    async def case_async_eleven(self) -> MyCase:
         await asyncio.sleep(0.01)
-        return MyCase(foo=7)
+        return MyCase(foo=11)
 
     @test_async_class_case_injected.case(
-        marks=[
-            FEATURE_PYTHON_3.mark_required(),
-        ],
+        marks=[FEATURE_PYTHON_3.mark_required()],
     )
-    async def case_async_yield_ten(self) -> t.AsyncIterator[MyCase]:
+    async def case_async_yield_twelve(self) -> t.AsyncIterator[MyCase]:
         await asyncio.sleep(0.01)
-        yield MyCase(foo=8)
+        yield MyCase(foo=12)

@@ -1,22 +1,22 @@
 import inspect
 import typing as t
-from functools import WRAPPER_ASSIGNMENTS, partial, update_wrapper, wraps
 
 from _pytest.mark import MarkDecorator
-from typing_extensions import Concatenate, ParamSpec, Self, override
+from typing_extensions import Concatenate, ParamSpec
 
-from pytest_case_provider.abc import CaseCollector, CaseParametrizer
-from pytest_case_provider.case.storage import CompositeCaseStorage
+from pytest_case_provider.abc import CaseCollector
+from pytest_case_provider.case.storage import (
+    CaseConfig,
+    CaseConfigHolder,
+    CompositeCaseStorage,
+    FuncCaseStorage,
+    MethodCaseStorage,
+)
 
 U = ParamSpec("U")
-F = t.TypeVar("F")
-V_co = t.TypeVar("V_co", covariant=True)
-T_co = t.TypeVar("T_co", covariant=True)
-S_contra = t.TypeVar("S_contra", contravariant=True)
-
-
-# NOTE: `__globals__` is used by pytest marks such as `pytest.mark.skipif` to evaluate string condition.
-_TEST_FUNC_WRAPPER_ASSIGNMENT: t.Final[t.Sequence[str]] = [*WRAPPER_ASSIGNMENTS, "__globals__"]
+T = t.TypeVar("T")
+V = t.TypeVar("V")
+S = t.TypeVar("S")
 
 
 class FuncDecorator:
@@ -26,127 +26,45 @@ class FuncDecorator:
     ) -> None:
         self.__marks = marks
 
-    def apply(self, func: F) -> F:
+    def apply(self, func: T) -> T:
         for mark in self.__marks or ():
-            func = t.cast("F", mark(func))
+            func = t.cast("T", mark(func))
 
         return func
 
 
-class FuncCaseStorage(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co]):
-    """
-    Stores cases of a specific type `T_co` for a specific test function.
-
-    Instances of this class are intended to be collected by pytest to generate test for each case.
-
-    During pytest test run this object delegates the call to actual test function.
-    """
-
-    def __init__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> None:
-        super().__init__()
-        self.__testfunc = testfunc
-
-        update_wrapper(self, self.__testfunc, assigned=_TEST_FUNC_WRAPPER_ASSIGNMENT)
-        if inspect.iscoroutinefunction(self.__testfunc):
-            inspect.markcoroutinefunction(self)
-
-    @override
-    def __str__(self) -> str:
-        return f"<{self.__class__.__name__} of {self.__testfunc}>"
-
-    def __call__(self, *args: U.args, **kwargs: U.kwargs) -> V_co:
-        # NOTE: `T` should be provided in `kwargs` by pytest fixture injection
-        return self.__testfunc(*args, **kwargs)  # type: ignore[arg-type]
-
-    @override
-    def get_case_param(self) -> inspect.Parameter:
-        return next(iter(inspect.signature(self.__testfunc).parameters.values()))
-
-
-class MethodCaseStorage(CompositeCaseStorage[T_co], CaseParametrizer[T_co], t.Generic[U, V_co, T_co, S_contra]):
-    """
-    Stores cases of a specific type `T_co` for a specific test method.
-
-    Instances of this class are intended to be collected by pytest to generate test for each case.
-
-    During pytest test run this object delegates the call to actual test method.
-    """
-
-    def __init__(self, testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co]) -> None:
-        super().__init__()
-        self.__testmethod = testmethod
-
-        update_wrapper(self, self.__testmethod)
-        if inspect.iscoroutinefunction(self.__testmethod):
-            inspect.markcoroutinefunction(self)
-
-    @override
-    def __str__(self) -> str:
-        return f"<{self.__class__.__name__} of {self.__testmethod}>"
-
-    @t.overload
-    def __get__(self, instance: None, owner: type[S_contra]) -> Self: ...
-
-    @t.overload
-    def __get__(self, instance: S_contra, owner: type[S_contra]) -> t.Callable[Concatenate[T_co, U], V_co]: ...
-
-    def __get__(
-        self,
-        instance: t.Optional[S_contra],
-        owner: type[S_contra],
-    ) -> t.Union[Self, t.Callable[Concatenate[T_co, U], V_co]]:
-        return (
-            wraps(self.__testmethod, assigned=_TEST_FUNC_WRAPPER_ASSIGNMENT)(partial(self, instance))
-            if instance is not None
-            else self
-        )
-
-    def __call__(self, instance: S_contra, *args: U.args, **kwargs: U.kwargs) -> V_co:
-        # NOTE: `T` should be provided in `kwargs` by pytest fixture injection
-        return self.__testmethod(instance, *args, **kwargs)  # type: ignore[arg-type]
-
-    @override
-    def get_case_param(self) -> inspect.Parameter:
-        params = iter(inspect.signature(self.__testmethod).parameters.values())
-        _ = next(params)  # skip `self`
-        return next(params)
-
-
-class FuncCaseStorageProvider(t.Generic[T_co]):
-    """Provides `FuncCaseStorage` objects of a specific `T_co` case type."""
+class FuncCaseStorageProvider(t.Generic[T]):
+    """Provides `FuncCaseStorage` objects of a specific `T` case type."""
 
     def __init__(
         self,
         decorators: FuncDecorator,
-        includes: t.Sequence[CaseCollector[T_co]],
+        includes: t.Sequence[t.Union[CaseCollector[T], CaseConfigHolder[T]]],
     ) -> None:
         self.__decorators = decorators
-        self.__includes = list(includes)
+        self.__includes = includes
 
-    def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseStorage[U, V_co, T_co]:
-        storage = FuncCaseStorage[U, V_co, T_co](self.__decorators.apply(testfunc))
-        storage.include(*self.__includes)
-        return storage
+    def __call__(self, testfunc: t.Callable[Concatenate[T, U], V]) -> FuncCaseStorage[T, U, V]:
+        wrapped = wrap_testfunc_cases(testfunc)
+        include_cases(wrapped, self.__includes)
+        return self.__decorators.apply(wrapped)
 
 
-class MethodCaseStorageProvider(t.Generic[T_co]):
-    """Provides `MethodCaseStorage` objects of a specific `T_co` case type."""
+class MethodCaseStorageProvider(t.Generic[T]):
+    """Provides `MethodCaseStorage` objects of a specific `T` case type."""
 
     def __init__(
         self,
         decorators: FuncDecorator,
-        includes: t.Sequence[CaseCollector[T_co]],
+        includes: t.Sequence[t.Union[CaseCollector[T], CaseConfigHolder[T]]],
     ) -> None:
         self.__decorators = decorators
-        self.__includes = list(includes)
+        self.__includes = includes
 
-    def __call__(
-        self,
-        testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
-    ) -> MethodCaseStorage[U, V_co, T_co, S_contra]:
-        storage = MethodCaseStorage[U, V_co, T_co, S_contra](self.__decorators.apply(testmethod))
-        storage.include(*self.__includes)
-        return storage
+    def __call__(self, testmethod: t.Callable[Concatenate[S, T, U], V]) -> MethodCaseStorage[S, T, U, V]:
+        wrapped = wrap_testmethod_cases(testmethod)
+        include_cases(wrapped, self.__includes)
+        return self.__decorators.apply(wrapped)
 
 
 class FuncCaseStorageProviderPlaceholder:
@@ -155,11 +73,11 @@ class FuncCaseStorageProviderPlaceholder:
     def __init__(self, decorators: FuncDecorator) -> None:
         self.__decorators = decorators
 
-    def __call__(self, testfunc: t.Callable[Concatenate[T_co, U], V_co]) -> FuncCaseStorage[U, V_co, T_co]:
+    def __call__(self, testfunc: t.Callable[Concatenate[T, U], V]) -> FuncCaseStorage[T, U, V]:
         return self.include()(testfunc)
 
-    def include(self, *others: CaseCollector[T_co]) -> FuncCaseStorageProvider[T_co]:
-        return FuncCaseStorageProvider[T_co](decorators=self.__decorators, includes=others)
+    def include(self, *others: t.Union[CaseCollector[T], CaseConfigHolder[T]]) -> FuncCaseStorageProvider[T]:
+        return FuncCaseStorageProvider[T](decorators=self.__decorators, includes=others)
 
 
 class MethodCaseStorageProviderPlaceholder:
@@ -168,14 +86,11 @@ class MethodCaseStorageProviderPlaceholder:
     def __init__(self, decorators: FuncDecorator) -> None:
         self.__decorators = decorators
 
-    def __call__(
-        self,
-        testmethod: t.Callable[Concatenate[S_contra, T_co, U], V_co],
-    ) -> MethodCaseStorage[U, V_co, T_co, S_contra]:
+    def __call__(self, testmethod: t.Callable[Concatenate[S, T, U], V]) -> MethodCaseStorage[S, T, U, V]:
         return self.include()(testmethod)
 
-    def include(self, *others: CaseCollector[T_co]) -> MethodCaseStorageProvider[T_co]:
-        return MethodCaseStorageProvider[T_co](decorators=self.__decorators, includes=others)
+    def include(self, *others: t.Union[CaseCollector[T], CaseConfigHolder[T]]) -> MethodCaseStorageProvider[T]:
+        return MethodCaseStorageProvider[T](decorators=self.__decorators, includes=others)
 
 
 def inject_cases_func(
@@ -237,3 +152,68 @@ def inject_cases_method(
     ...         return "Bar"
     """
     return MethodCaseStorageProviderPlaceholder(FuncDecorator(marks))
+
+
+def wrap_testfunc_cases(
+    testfunc: t.Callable[Concatenate[T, U], V],
+) -> FuncCaseStorage[T, U, V]:
+    config = CaseConfig(
+        storage=CompositeCaseStorage[T](),
+        case_parameter=next(iter(inspect.signature(testfunc).parameters.values())),
+    )
+
+    wrapped = t.cast("FuncCaseStorage[T, U, V]", testfunc)
+    wrapped.__pytest_case_config__ = config
+    wrapped.case = config.storage.case  # type: ignore[method-assign]
+    wrapped.include = config.storage.include  # type: ignore[method-assign,assignment]
+
+    return wrapped
+
+
+def wrap_testmethod_cases(
+    testmethod: t.Callable[Concatenate[S, T, U], V],
+) -> MethodCaseStorage[S, T, U, V]:
+    params = iter(inspect.signature(testmethod).parameters.values())
+    next(params)  # skip `self`
+
+    config = CaseConfig(
+        storage=CompositeCaseStorage[T](),
+        case_parameter=next(params),
+    )
+
+    wrapped = t.cast("MethodCaseStorage[S, T, U, V]", testmethod)
+    wrapped.__pytest_case_config__ = config
+    wrapped.case = config.storage.case  # type: ignore[method-assign]
+    wrapped.include = config.storage.include  # type: ignore[method-assign,assignment]
+
+    return wrapped
+
+
+def include_cases(
+    storage: CaseConfigHolder[T],
+    includes: t.Optional[t.Sequence[t.Union[CaseCollector[T], CaseConfigHolder[T], None]]],
+) -> None:
+    config: t.Optional[CaseConfig[T]] = extract_case_config(storage)
+    if config is None:
+        return
+
+    for include in includes or ():
+        sub: t.Optional[CaseCollector[T]] = (
+            include
+            if isinstance(include, CaseCollector)
+            else extract_case_collector(include)
+            if include is not None
+            else None
+        )
+        if sub is not None:
+            config.storage.include(sub)
+
+
+def extract_case_config(obj: object) -> t.Optional[CaseConfig[T]]:
+    config = getattr(obj, "__pytest_case_config__", None)
+    return config if isinstance(config, CaseConfig) else None
+
+
+def extract_case_collector(obj: object) -> t.Optional[CaseCollector[T]]:
+    config: t.Optional[CaseConfig[T]] = extract_case_config(obj)
+    return config.storage if config is not None else None

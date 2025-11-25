@@ -128,6 +128,7 @@ enable_error_code = [
 module = ["tests.*"]
 disallow_any_expr = false
 disallow_any_explicit = false
+disallow_any_decorated = false
 warn_return_any = false
 
 
@@ -143,6 +144,7 @@ testpaths = [
     "tests",
 ]
 asyncio_mode = "auto"
+#anyio_mode = "auto"
 
 [tool.coverage.run]
 branch = true
