@@ -19,37 +19,11 @@ class Report:
     xpass: set[str] = field(default_factory=set)
 
 
-TEST_RESULT_PATTERN = re.compile(
-    r"^(?P<name>[\w./:\[\]-]+)\s+(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)\s*(?:\[\s*\d+%\])?$"
-)
-
-
-def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
-    report = Report()
-    status2collection = {
-        "PASSED": report.passed,
-        "SKIPPED": report.skipped,
-        "FAILED": report.failed,
-        "ERROR": report.error,
-        "XFAIL": report.xfail,
-        "XPASS": report.xpass,
-    }
-
-    for line in outlines:
-        match = TEST_RESULT_PATTERN.match(line)
-        if match is not None:
-            status = match.group("status")
-            status2collection[status].add(match.group("name").removeprefix(prefix))
-
-    return report
-
-
 @pytest.mark.parametrize(
-    ("path", "arguments", "report"),
+    ("path", "report"),
     [
         pytest.param(
             Path(__file__).parent / "test_inject_cases.py",
-            ["--asyncio-mode=auto"],
             Report(
                 passed={
                     "::TestClass::test_class_case_injected[case_class_special_number]",
@@ -108,7 +82,6 @@ def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
         ),
         pytest.param(
             Path(__file__).parent / "test_marks.py",
-            [],
             Report(
                 passed={
                     "::test_obsoletes_python2",
@@ -134,11 +107,10 @@ def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
 def test_inject_case_parametrizes_test_functions(
     pytester: Pytester,
     path: Path,
-    arguments: t.Sequence[str],
     report: Report,
 ) -> None:
     path = pytester.makepyfile(path.read_text())
-    result = pytester.runpytest_subprocess("-vvv", *arguments)
+    result = pytester.runpytest_subprocess("-vvv")
 
     assert parse_report(path.name, result.outlines) == report
 
@@ -176,3 +148,28 @@ def test_simple_testfile_return_code(
 @pytest.fixture
 def simple_testfile(pytester: Pytester) -> Path:
     return pytester.makepyfile((Path(__file__).parent.parent / "stub" / "simple_testfile.py").read_text())
+
+
+TEST_RESULT_PATTERN = re.compile(
+    r"^(?P<name>[\w./:\[\]-]+)\s+(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)\s*(?:\[\s*\d+%\])?$"
+)
+
+
+def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
+    report = Report()
+    status2collection = {
+        "PASSED": report.passed,
+        "SKIPPED": report.skipped,
+        "FAILED": report.failed,
+        "ERROR": report.error,
+        "XFAIL": report.xfail,
+        "XPASS": report.xpass,
+    }
+
+    for line in outlines:
+        match = TEST_RESULT_PATTERN.match(line)
+        if match is not None:
+            status = match.group("status")
+            status2collection[status].add(match.group("name").removeprefix(prefix))
+
+    return report
