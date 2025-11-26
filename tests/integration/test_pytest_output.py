@@ -184,7 +184,7 @@ def sandbox_test_path(pytester: Pytester, test_path: Path) -> Path:
     # NOTE: fixes run via nox
     sandbox_stub_path = pytester.path / "tests" / "stub"
     sandbox_stub_path.parent.mkdir(parents=True, exist_ok=True)
-    sandbox_stub_path.symlink_to(Path(__file__).parent / "stub")
+    sandbox_stub_path.symlink_to(Path(__file__).parent.parent / "stub")
 
     sandbox_test_path = pytester.makepyfile(**{test_path.stem: test_path.read_text()})
     case_path = test_path.with_stem("case_" + test_path.stem.removeprefix("test_"))
