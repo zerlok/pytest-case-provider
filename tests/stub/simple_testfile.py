@@ -1,10 +1,10 @@
 # NOTE: this file should not run by original pytest.
 
 
-from pytest_case_provider import inject_cases_func
+from pytest_case_provider import inject_func
 
 
-@inject_cases_func()
+@inject_func()
 def test_ok_42_injected(number: int) -> None:
     assert number == 42  # noqa: PLR2004
 
@@ -14,7 +14,7 @@ def case_42() -> int:
     return 42
 
 
-@inject_cases_func()
+@inject_func()
 def test_error_injected(number: int) -> None:
     assert True
 

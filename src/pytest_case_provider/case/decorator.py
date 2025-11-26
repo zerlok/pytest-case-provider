@@ -75,7 +75,7 @@ class MethodCaseStorageProviderPlaceholder:
         return MethodCaseProvider[T](includes=cases, marks=self.__marks)
 
 
-def inject_cases_func(
+def inject_func(
     marks: t.Optional[t.Sequence[MarkDecorator]] = None,
 ) -> FuncCasePlaceholder:
     """
@@ -88,7 +88,7 @@ def inject_cases_func(
 
     Usage:
 
-    >>> @inject_cases_func()
+    >>> @inject_func()
     ... def test_func(case: str) -> None: # test_func expects cases of type `str`
     ...     assert case == "Foo"
     ...
@@ -96,7 +96,7 @@ def inject_cases_func(
     ... def case_foo() -> str:
     ...     return "Foo"
     ...
-    >>> @inject_cases_func().include(test_func) # `test_func_2` includes cases from `test_func`
+    >>> @inject_func().include(test_func) # `test_func_2` includes cases from `test_func`
     ... def test_func_2(case: str) -> None:
     ...     assert case in {"Foo", "Bar"}
     ...
@@ -107,7 +107,7 @@ def inject_cases_func(
     return FuncCasePlaceholder(marks)
 
 
-def inject_cases_method(
+def inject_method(
     marks: t.Optional[t.Sequence[MarkDecorator]] = None,
 ) -> MethodCaseStorageProviderPlaceholder:
     """
@@ -121,7 +121,7 @@ def inject_cases_method(
     Usage:
 
     >>> class TestClass:
-    ...     @inject_cases_method()
+    ...     @inject_method()
     ...     def test_method(self, case: str) -> None: # test_method expects cases of type `str`
     ...         assert case == "Foo"
     ...
@@ -129,7 +129,7 @@ def inject_cases_method(
     ...     def case_foo(self) -> str:
     ...         return "Foo"
     ...
-    ...     @inject_cases_method().include(test_method) # `test_method_2` includes cases from `test_method`
+    ...     @inject_method().include(test_method) # `test_method_2` includes cases from `test_method`
     ...     def test_method_2(self, case: str) -> None:
     ...         assert case in {"Foo", "Bar"}
     ...

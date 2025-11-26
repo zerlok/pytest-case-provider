@@ -4,7 +4,7 @@ from dataclasses import dataclass, replace
 
 import pytest
 
-from pytest_case_provider import inject_cases_func, inject_cases_method
+from pytest_case_provider import inject_func, inject_method
 from tests.stub.feature import FEATURE_PYTHON_3
 
 
@@ -17,24 +17,24 @@ def test_without_case_injection() -> None:
     assert True
 
 
-@inject_cases_func()
+@inject_func()
 def test_no_case_injected(case: MyCase) -> None:
     pytest.fail("this test should not run, because it has no cases")
 
 
-@inject_cases_func()
+@inject_func()
 def test_case_injected(case: MyCase) -> None:
     assert isinstance(case, MyCase), f"case: {type(case)}"
     assert case.foo > 0
 
 
-@inject_cases_func().include(test_case_injected)  # include cases from other test
+@inject_func().include(test_case_injected)  # include cases from other test
 def test_cases_included_to_fixture(case: MyCase, case_foo_inc: MyCase) -> None:
     assert isinstance(case, MyCase), f"case: {type(case)}"
     assert case.foo + 1 == case_foo_inc.foo
 
 
-@inject_cases_func(
+@inject_func(
     marks=[
         pytest.mark.skip(reason="test should not run"),  # test functions can be skipped
     ],
@@ -109,7 +109,7 @@ def case_skipped_decorator() -> MyCase:
     pytest.fail("this test should not run, because case provider has skip mark")
 
 
-@inject_cases_func()
+@inject_func()
 @pytest.mark.parametrize("foo", [1, 2, 3])  # test functions can be parametrized
 def test_parametrized_foo_case_injected(case: MyCase, foo: int) -> None:
     assert isinstance(case, MyCase), f"case: {type(case)}"
@@ -126,15 +126,15 @@ class TestClass:
     def test_without_case_injection(self) -> None:
         assert True
 
-    @inject_cases_method()
+    @inject_method()
     def test_no_case_injected(self, case: MyCase) -> None:
         pytest.fail("this test should not run, because it has no cases")
 
-    @inject_cases_method()
+    @inject_method()
     def test_class_case_injected(self, case: MyCase) -> None:
         assert isinstance(case, MyCase), f"case: {type(case)}"
 
-    @inject_cases_method().include(test_class_case_injected)
+    @inject_method().include(test_class_case_injected)
     def test_class_cases_included(self, case: MyCase) -> None:
         assert isinstance(case, MyCase), f"case: {type(case)}"
 
@@ -156,7 +156,7 @@ class TestClass:
 
 
 # FIXME: make async test functions work with pytest-asyncio
-@inject_cases_func()
+@inject_func()
 async def test_async_func_case_injected(case: MyCase) -> None:
     await asyncio.sleep(0.01)
     assert isinstance(case, MyCase), f"case: {type(case)}"
@@ -178,7 +178,7 @@ async def case_async_yield_ten() -> t.AsyncIterator[MyCase]:
 
 
 class TestClassAsync:
-    @inject_cases_method()
+    @inject_method()
     async def test_async_class_case_injected(self, case: MyCase) -> None:
         assert isinstance(case, MyCase), f"case: {type(case)}"
 

@@ -8,36 +8,49 @@
 [![Downloads](https://img.shields.io/pypi/dm/pytest-case-provider.svg)](https://pypistats.org/packages/pytest-case-provider)
 [![GitHub stars](https://img.shields.io/github/stars/zerlok/pytest-case-provider)](https://github.com/zerlok/pytest-case-provider/stargazers)
 
-Case parametrization for `pytest` with **fixture**, **class**, and **async** support.
-Provides **declarative**, **typed**, **on demand** case injection for both sync and async test functions.
+Parametrization for pytest with fixture support, async support, class-method support, shared storage, and module-level case discovery. Declarative, typed, on-demand injection for sync, async, iterable, and async-iterable providers.
 
 ---
-
 ## Overview
 
-`pytest-case-provider` extends pytest’s parametrization system.  
-It was **inspired by** [`pytest-cases`](https://smarie.github.io/python-pytest-cases/), but redesigned from scratch for **strict typing**, **async support**, and **fixture-native case injection**.
-
-It allows attaching *case providers* directly to test functions or methods via `@inject_cases_func` and  
-`@inject_cases_method`.
-
-Cases can be:
-
-* Synchronous or asynchronous.
-* Iterable or async-iterable.
-* Fixture-dependent.
-* Composable across tests or classes.
+Extends pytest’s parametrization layer with case storages and containers. Containers attach case sets to test functions and test methods via `inject_func` and `inject_method`. Fixtures integrate natively. Async is supported. Matching `case_*.py` modules are scanned and loaded. Duplicate case names collapse to single instances.
 
 ---
 
-## API Summary
+## Core Concepts
 
-| Symbol                    | Description                           |
-|---------------------------|---------------------------------------|
-| `inject_cases_func`       | Decorator/injector for test functions |
-| `inject_cases_method`     | Same as above, for test class methods |
-| `CaseStorage[T]`          | Mutable case storage container        |
-| `CompositeCaseStorage[T]` | Aggregates multiple `CaseCollector`   |
+### Providers
+
+Functions that yield case values. Supported forms:
+
+* Sync
+* Async
+* Iterable
+* Async iterable
+* Fixture-dependent
+
+### Storage
+
+`CaseStorage` instances hold providers. `CompositeCaseStorage` merges multiple storages.
+
+### Container
+
+`CaseContainer` wraps a storage and exposes:
+
+* `.case()`
+* `.include()`
+* `.inject_func()`
+* `.inject_method()`
+
+A single container instance feeds any number of tests.
+
+### Injectors
+
+`inject_func()` and `inject_method()` create isolated containers for direct use. `.include()` attaches external storages to them.
+
+### Module-Level Loading
+
+If `test_x.py` exists alongside `case_x.py`, the plugin imports the case module and registers its providers. Tests using `inject_func()` or `inject_method()` receive matching providers. Matching is based on the type annotation of the `case` parameter.
 
 ---
 
@@ -45,119 +58,102 @@ Cases can be:
 
 ```bash
 pip install pytest-case-provider
-````
+```
 
 ---
 
-## Usage example
+## Quick Start
 
 ```python
+# test_example.py
 import typing
-from dataclasses import dataclass, replace
-import pytest
-from pytest_case_provider import inject_cases_func, inject_cases_method
-
+from dataclasses import dataclass
+from pytest_case_provider import CaseContainer
 
 @dataclass(frozen=True)
 class MyCase:
     foo: int
 
+container = CaseContainer[MyCase]()
 
-@pytest.fixture
-def number() -> int:
-    return 42
-
-
-# Regular test
-def test_without_case_injection() -> None:
-    assert True
-
-
-# Case-enabled test function
-@inject_cases_func()
-def test_case_injected(case: MyCase) -> None:
+@container.inject_func()
+def test_cases(case: MyCase) -> None:
     assert isinstance(case, MyCase)
 
+class TestGroup:
+    @container.inject_method()
+    def test_group(self, case: MyCase) -> None:
+        assert case.foo >= 1
 
-# Cross-inject from another test
-@inject_cases_func.include(test_case_injected)
-def test_case_increment(case: MyCase, case_foo_inc: MyCase) -> None:
-    assert case.foo + 1 == case_foo_inc.foo
-
-
-# Define case providers
-@test_case_injected.case()
-def case_one() -> MyCase:
+@container.case()
+def case_small() -> MyCase:
     return MyCase(foo=1)
 
-
-@test_case_injected.case()
-def case_two() -> MyCase:
-    return MyCase(foo=2)
-
-
-# Use other fixtures in case providers
-@test_case_injected.case()
-def case_number(number: int) -> MyCase:
-    return MyCase(foo=number)
-
-
-# Async case provider
-@test_case_injected.case()
-async def case_async_generated() -> MyCase:
+@container.case()
+async def case_async() -> MyCase:
     return MyCase(foo=999)
 
-
-# Iterable provider
-@test_case_injected.case()
-def case_iterable() -> typing.Iterator[MyCase]:
+@container.case()
+def case_range() -> typing.Iterator[MyCase]:
     yield MyCase(foo=10)
-
-
-# Async iterable provider
-@test_case_injected.case()
-async def case_async_iterable() -> typing.Iterator[MyCase]:
-    yield MyCase(foo=20)
-
-
-# Access case object from fixture
-@pytest.fixture
-def case_foo_inc(case: MyCase) -> MyCase:
-    return replace(case, foo=case.foo + 1)
-
-
-# Example class-based usage
-class TestClass:
-    @inject_cases_method()
-    def test_class_cases(self, case: MyCase) -> None:
-        assert isinstance(case, MyCase)
-
-    @test_class_cases.case()
-    def case_three(self) -> MyCase:
-        return MyCase(foo=3)
-
-    @test_class_cases.case()
-    def case_four(self) -> MyCase:
-        return MyCase(foo=4)
 ```
 
-## Test Discovery Output
+---
 
-Pytest will expand each injected case as a distinct test variant using pytest's parametrization:
+## Module-Level Case Files
 
 ```
-test_example.py::test_case_injected[case_one]
-test_example.py::test_case_injected[case_two]
-test_example.py::test_case_injected[case_number]
-test_example.py::test_case_injected[case_async_generated]
-test_example.py::test_case_injected[case_iterable]
-test_example.py::test_case_injected[case_async_iterable]
-test_example.py::test_case_increment[case_one]
-test_example.py::test_case_increment[case_two]
-test_example.py::test_case_increment[case_number]
-test_example.py::test_case_increment[case_async_generated]
-test_example.py::test_case_increment[case_iterable]
-test_example.py::test_case_increment[case_async_iterable]
-test_example.py::TestClass::test_class_cases[case_three]
-test_example.py::TestClass::test_class_cases[case_four]
+tests/
+    test_math.py
+    case_math.py
 ```
+
+`case_math.py`:
+
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class MathCase:
+    x: int
+    y: int
+
+def case_x1_y2() -> MathCase:
+    return MathCase(1, 2)
+```
+
+`test_math.py`:
+
+```python
+from pytest_case_provider import inject_func
+from tests.case_math import MathCase
+
+@inject_func()
+def test_add(case: MathCase) -> None:
+    assert case.x + case.y == 3
+```
+
+The plugin imports `case_math` and binds its providers to the injector.
+
+---
+
+## Pytest Expansion
+
+```
+test_example.py::test_cases[case_small]
+test_example.py::test_cases[case_async]
+test_example.py::test_cases[case_range0]
+test_example.py::test_cases[case_range1]
+test_example.py::TestGroup::test_group[case_small]
+test_example.py::TestGroup::test_group[case_async]
+test_example.py::TestGroup::test_group[case_range0]
+test_example.py::TestGroup::test_group[case_range1]
+```
+
+---
+
+## Notes
+
+* Async requires `pytest-asyncio`.
+* AnyIO execution paths are disabled.
+* Case deduplication follows provider-name semantics.
