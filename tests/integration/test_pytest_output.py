@@ -20,80 +20,115 @@ class Report:
 
 
 @pytest.mark.parametrize(
-    ("path", "report"),
+    ("test_path", "report"),
     [
         pytest.param(
-            Path(__file__).parent / "test_inject_cases.py",
+            Path(__file__).parent / "test_case_decorator.py",
             Report(
                 passed={
-                    "::TestClass::test_class_case_injected[case_class_special_number]",
-                    "::TestClass::test_class_case_injected[case_seven]",
-                    "::TestClass::test_class_case_injected[case_six]",
-                    "::TestClass::test_class_case_injected[case_yield_eight]",
-                    "::TestClass::test_class_cases_included[case_class_special_number]",
-                    "::TestClass::test_class_cases_included[case_seven]",
-                    "::TestClass::test_class_cases_included[case_six]",
-                    "::TestClass::test_class_cases_included[case_yield_eight]",
-                    "::TestClass::test_without_case_injection",
-                    "::TestClassAsync::test_async_class_case_injected[case_async_eleven]",
-                    "::TestClassAsync::test_async_class_case_injected[case_async_yield_twelve]",
-                    "::test_async_func_case_injected[case_async_nine]",
-                    "::test_async_func_case_injected[case_async_yield_ten]",
-                    "::test_case_injected[case_async_three_for_sync_test]",
-                    "::test_case_injected[case_async_yield_five_for_sync_test]",
-                    "::test_case_injected[case_one]",
-                    "::test_case_injected[case_special_number]",
-                    "::test_case_injected[case_two]",
-                    "::test_case_injected[case_yield_four]",
-                    "::test_cases_included_to_fixture[case_async_three_for_sync_test]",
-                    "::test_cases_included_to_fixture[case_async_yield_five_for_sync_test]",
-                    "::test_cases_included_to_fixture[case_case_minus_one]",
-                    "::test_cases_included_to_fixture[case_one]",
-                    "::test_cases_included_to_fixture[case_special_number]",
-                    "::test_cases_included_to_fixture[case_two]",
-                    "::test_cases_included_to_fixture[case_yield_four]",
-                    "::test_parametrized_foo_case_injected[case_parametrize_foo-1]",
-                    "::test_parametrized_foo_case_injected[case_parametrize_foo-2]",
-                    "::test_parametrized_foo_case_injected[case_parametrize_foo-3]",
-                    "::test_without_case_injection",
+                    "test_case_decorator.py::TestClass::test_class_case_injected[case_class_special_number]",
+                    "test_case_decorator.py::TestClass::test_class_case_injected[case_seven]",
+                    "test_case_decorator.py::TestClass::test_class_case_injected[case_six]",
+                    "test_case_decorator.py::TestClass::test_class_case_injected[case_yield_eight]",
+                    "test_case_decorator.py::TestClass::test_class_cases_included[case_class_special_number]",
+                    "test_case_decorator.py::TestClass::test_class_cases_included[case_seven]",
+                    "test_case_decorator.py::TestClass::test_class_cases_included[case_six]",
+                    "test_case_decorator.py::TestClass::test_class_cases_included[case_yield_eight]",
+                    "test_case_decorator.py::TestClass::test_without_case_injection",
+                    "test_case_decorator.py::TestClassAsync::test_async_class_case_injected[case_async_eleven]",
+                    "test_case_decorator.py::TestClassAsync::test_async_class_case_injected[case_async_yield_twelve]",
+                    "test_case_decorator.py::test_async_func_case_injected[case_async_nine]",
+                    "test_case_decorator.py::test_async_func_case_injected[case_async_yield_ten]",
+                    "test_case_decorator.py::test_case_injected[case_async_three_for_sync_test]",
+                    "test_case_decorator.py::test_case_injected[case_async_yield_five_for_sync_test]",
+                    "test_case_decorator.py::test_case_injected[case_one]",
+                    "test_case_decorator.py::test_case_injected[case_special_number]",
+                    "test_case_decorator.py::test_case_injected[case_two]",
+                    "test_case_decorator.py::test_case_injected[case_yield_four]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_async_three_for_sync_test]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_async_yield_five_for_sync_test]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_case_minus_one]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_one]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_special_number]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_two]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_yield_four]",
+                    "test_case_decorator.py::test_parametrized_foo_case_injected[case_parametrize_foo-1]",
+                    "test_case_decorator.py::test_parametrized_foo_case_injected[case_parametrize_foo-2]",
+                    "test_case_decorator.py::test_parametrized_foo_case_injected[case_parametrize_foo-3]",
+                    "test_case_decorator.py::test_without_case_injection",
                 },
                 skipped={
-                    "::TestClass::test_no_case_injected[NOTSET]",
-                    "::test_case_injected[case_skipped_mark_param]",
-                    "::test_case_injected[case_skipped_decorator]",
-                    "::test_cases_included_to_fixture[case_skipped_mark_param]",
-                    "::test_cases_included_to_fixture[case_skipped_decorator]",
-                    "::test_no_case_injected[NOTSET]",
-                    "::test_cases_included_but_test_skipped[case_async_three_for_sync_test]",
-                    "::test_cases_included_but_test_skipped[case_async_yield_five_for_sync_test]",
-                    "::test_cases_included_but_test_skipped[case_one]",
-                    "::test_cases_included_but_test_skipped[case_skipped_decorator]",
-                    "::test_cases_included_but_test_skipped[case_skipped_mark_param]",
-                    "::test_cases_included_but_test_skipped[case_special_number]",
-                    "::test_cases_included_but_test_skipped[case_two]",
-                    "::test_cases_included_but_test_skipped[case_yield_four]",
+                    "test_case_decorator.py::TestClass::test_no_case_injected[NOTSET]",
+                    "test_case_decorator.py::test_case_injected[case_skipped_mark_param]",
+                    "test_case_decorator.py::test_case_injected[case_skipped_decorator]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_skipped_mark_param]",
+                    "test_case_decorator.py::test_cases_included_to_fixture[case_skipped_decorator]",
+                    "test_case_decorator.py::test_no_case_injected[NOTSET]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_async_three_for_sync_test]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_async_yield_five_for_sync_test]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_one]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_skipped_decorator]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_skipped_mark_param]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_special_number]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_two]",
+                    "test_case_decorator.py::test_cases_included_but_test_skipped[case_yield_four]",
                 },
                 failed=set(),
                 error=set(),
                 xfail=set(),
                 xpass=set(),
             ),
-            id="test_inject_case.py report",
+            id="test_case_decorator.py report",
+        ),
+        pytest.param(
+            Path(__file__).parent / "test_case_container.py",
+            Report(
+                passed={
+                    "test_case_container.py::test_case_injected_1[case_one]",
+                    "test_case_container.py::test_case_injected_1[case_two]",
+                    "test_case_container.py::test_case_injected_2[case_one]",
+                    "test_case_container.py::test_case_injected_2[case_two]",
+                    "test_case_container.py::test_without_case_injection",
+                },
+                skipped=set(),
+                failed=set(),
+                error=set(),
+                xfail=set(),
+                xpass=set(),
+            ),
+            id="test_case_container.py report",
+        ),
+        pytest.param(
+            Path(__file__).parent / "test_module.py",
+            Report(
+                passed={
+                    "test_module.py::test_got_int[case_async_int_43]",
+                    "test_module.py::test_got_int[case_int_42]",
+                    "test_module.py::test_got_seq_int[case_async_seq_int_42_times_1]",
+                    "test_module.py::test_got_seq_int[case_seq_int_42]",
+                },
+                skipped=set(),
+                failed=set(),
+                error=set(),
+                xfail=set(),
+                xpass=set(),
+            ),
+            id="test_module.py (with case_module.py) report",
         ),
         pytest.param(
             Path(__file__).parent / "test_marks.py",
             Report(
                 passed={
-                    "::test_obsoletes_python2",
-                    "::test_requires_python3",
-                    "::test_runs_only_when_bar_toggle_on",
-                    "::test_runs_only_when_foo_toggle_off",
+                    "test_marks.py::test_obsoletes_python2",
+                    "test_marks.py::test_requires_python3",
+                    "test_marks.py::test_runs_only_when_bar_toggle_on",
+                    "test_marks.py::test_runs_only_when_foo_toggle_off",
                 },
                 skipped={
-                    "::test_obsoletes_python3",
-                    "::test_requires_python2",
-                    "::test_runs_only_when_bar_toggle_off",
-                    "::test_runs_only_when_foo_toggle_on",
+                    "test_marks.py::test_obsoletes_python3",
+                    "test_marks.py::test_requires_python2",
+                    "test_marks.py::test_runs_only_when_bar_toggle_off",
+                    "test_marks.py::test_runs_only_when_foo_toggle_on",
                 },
                 failed=set(),
                 error=set(),
@@ -106,13 +141,12 @@ class Report:
 )
 def test_inject_case_parametrizes_test_functions(
     pytester: Pytester,
-    path: Path,
+    sandbox_test_path: Path,
     report: Report,
 ) -> None:
-    path = pytester.makepyfile(path.read_text())
     result = pytester.runpytest_subprocess("-vvv")
 
-    assert parse_report(path.name, result.outlines) == report
+    assert parse_report(sandbox_test_path.name, result.outlines) == report
 
 
 def test_simple_testfile_all_cases_are_listed(
@@ -146,13 +180,26 @@ def test_simple_testfile_return_code(
 
 
 @pytest.fixture
+def sandbox_test_path(pytester: Pytester, test_path: Path) -> Path:
+    # NOTE: fixes run via nox
+    sandbox_stub_path = pytester.path / "tests" / "stub"
+    sandbox_stub_path.parent.mkdir(parents=True, exist_ok=True)
+    sandbox_stub_path.symlink_to(Path(__file__).parent / "stub")
+
+    sandbox_test_path = pytester.makepyfile(**{test_path.stem: test_path.read_text()})
+    case_path = test_path.with_stem("case_" + test_path.stem.removeprefix("test_"))
+    if case_path.exists():
+        pytester.makepyfile(**{case_path.stem: case_path.read_text()})
+
+    return sandbox_test_path
+
+
+@pytest.fixture
 def simple_testfile(pytester: Pytester) -> Path:
     return pytester.makepyfile((Path(__file__).parent.parent / "stub" / "simple_testfile.py").read_text())
 
 
-TEST_RESULT_PATTERN = re.compile(
-    r"^(?P<name>[\w./:\[\]-]+)\s+(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)\s*(?:\[\s*\d+%\])?$"
-)
+TEST_RESULT_PATTERN = re.compile(r"^(?P<name>[\w./:\[\]-]+)\s+(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)")
 
 
 def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
@@ -170,6 +217,6 @@ def parse_report(prefix: str, outlines: t.Sequence[str]) -> Report:
         match = TEST_RESULT_PATTERN.match(line)
         if match is not None:
             status = match.group("status")
-            status2collection[status].add(match.group("name").removeprefix(prefix))
+            status2collection[status].add(match.group("name"))
 
     return report
