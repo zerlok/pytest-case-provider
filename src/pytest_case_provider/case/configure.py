@@ -63,7 +63,7 @@ def include_cases(
 
 
 def inspect_params(func: t.Callable[..., object]) -> t.Iterator[inspect.Parameter]:
-    return iter(inspect.signature(func, eval_str=True).parameters.values())
+    return iter(inspect.signature(func).parameters.values())
 
 
 def extract_case_storage(obj: object) -> t.Optional[CaseStorage[T]]:

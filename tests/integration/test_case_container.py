@@ -6,7 +6,7 @@ import pytest
 from pytest_case_provider.case.container import CaseContainer
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class MyCase:
     foo: int
 

@@ -32,7 +32,7 @@ class InspectingCaseCollector(CaseCollector[T]):
         if not callable(obj):
             return False
 
-        ret = inspect.signature(obj, eval_str=True).return_annotation
+        ret = inspect.signature(obj).return_annotation
         if ret is None:
             return False
 
