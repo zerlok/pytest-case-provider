@@ -16,7 +16,7 @@ T = t.TypeVar("T")
 class InspectingCaseCollector(CaseCollector[T]):
     def __init__(self, obj: object, of_type: type[T]) -> None:
         self.__obj = obj
-        self.__of_type = of_type if isinstance(of_type, type) else t.get_origin(of_type)  # type: ignore[redundant-expr]
+        self.__of_type = _normalize_type(of_type)
 
     @override
     def collect_cases(self) -> t.Iterable[CaseInfo[T]]:
@@ -66,3 +66,26 @@ def collect_cases_class(class_: type[SupportsDefaultInit], of_type: type[T]) -> 
 @cache
 def _get_instance(class_: type[SupportsDefaultInit]) -> object:
     return class_()
+
+
+def _normalize_type(of_type: type[T]) -> type[T]:
+    try:
+        _ = issubclass(object, of_type)
+
+    except TypeError:
+        origin = t.get_origin(of_type)
+        try:
+            _ = issubclass(
+                object,
+                origin,  # type: ignore[arg-type]
+            )
+
+        except (TypeError, ValueError) as err:
+            msg = "can't use provided type for case inspection"
+            raise TypeError(msg, of_type) from err
+
+        else:
+            return t.cast("type[T]", origin)
+
+    else:
+        return of_type
