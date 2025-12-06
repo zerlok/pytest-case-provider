@@ -49,11 +49,17 @@ class CaseParametrizedTestGenerator:
             return None
 
         case_prefix = getattr(module, "case_prefix", "case_")
-        base_name = name.removeprefix("test_")
-        case_module_name = f"{case_prefix}{base_name}"
+        if not isinstance(case_prefix, str):
+            return None
 
+        base_name = name.removeprefix("test_")
+        if not base_name:
+            return None
+
+        case_module_name = f"{case_prefix}{base_name}"
+        qualname = f"{package}.{case_module_name}" if package else case_module_name
         try:
-            return importlib.import_module(case_module_name, package)
+            return importlib.import_module(qualname)
 
         except ImportError:
             return None
