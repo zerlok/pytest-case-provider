@@ -5,7 +5,9 @@ from _pytest.fixtures import FixtureDef, SubRequest
 from _pytest.mark import ParameterSet
 from _pytest.python import Metafunc
 from _pytest.scope import _ScopeName
-from typing_extensions import Concatenate, ParamSpec
+from typing_extensions import Concatenate, ParamSpec, assert_never
+
+from pytest_case_provider.inspect import get_func_kind
 
 U = ParamSpec("U")
 V_co = t.TypeVar("V_co", covariant=True)
@@ -37,6 +39,21 @@ def parametrize_metafunc_with_fixture_params(
 
 def invoke_with_fixture_values(request: SubRequest, func: t.Callable[U, V_co]) -> V_co:
     params = list(inspect.signature(func).parameters.values())
-    args = [request.instance] if request.instance is not None else []
-    kwargs = {param.name: request.getfixturevalue(param.name) for param in params[int(request.instance is not None) :]}
+    kind = get_func_kind(func)
+
+    if kind == "module-function" or kind == "static-method" or kind == "local-function":  # noqa: PLR1714
+        args = []
+        kwargs = {param.name: request.getfixturevalue(param.name) for param in params}
+
+    elif kind == "class-function":
+        args = [request.instance]
+        kwargs = {param.name: request.getfixturevalue(param.name) for param in params[1:]}
+
+    elif kind == "class-method":
+        args = [type(request.instance)]
+        kwargs = {param.name: request.getfixturevalue(param.name) for param in params[1:]}
+
+    else:
+        assert_never(kind)
+
     return func(*args, **kwargs)
