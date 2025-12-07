@@ -5,7 +5,7 @@ from _pytest.fixtures import FixtureDef, SubRequest
 from _pytest.mark import ParameterSet
 from _pytest.python import Metafunc
 from _pytest.scope import _ScopeName
-from typing_extensions import Concatenate, ParamSpec
+from typing_extensions import Concatenate, ParamSpec, assert_never
 
 from pytest_case_provider.inspect import get_func_kind
 
@@ -54,6 +54,6 @@ def invoke_with_fixture_values(request: SubRequest, func: t.Callable[U, V_co]) -
         kwargs = {param.name: request.getfixturevalue(param.name) for param in params[1:]}
 
     else:
-        t.assert_never(kind)
+        assert_never(kind)
 
     return func(*args, **kwargs)
