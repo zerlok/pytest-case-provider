@@ -106,6 +106,8 @@ class Report:
                     "test_module.py::test_got_int[case_int_42]",
                     "test_module.py::test_got_seq_int[case_async_seq_int_42_times_1]",
                     "test_module.py::test_got_seq_int[case_seq_int_42]",
+                    "test_module.py::TestGroup::test_got_int[case_async_int_43]",
+                    "test_module.py::TestGroup::test_got_int[case_int_42]",
                 },
                 skipped=set(),
                 failed=set(),
