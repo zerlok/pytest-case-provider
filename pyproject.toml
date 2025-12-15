@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-case-provider"
-version = "0.4.2"
+version = "0.4.3"
 description = "Advanced pytest parametrization plugin that generates test case instances from sync or async factories."
 authors = ["zerlok <danil.troshnev@gmail.com>"]
 readme = "README.md"
@@ -33,7 +33,7 @@ case_provider = "pytest_case_provider.plugin"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pytest = "^8"
+pytest = ">=8"
 typing-extensions = "^4"
 
 [tool.poetry.group.dev.dependencies]

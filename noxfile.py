@@ -38,10 +38,19 @@ PYTEST_MATRIX = [
     # ),
     PytestMatrixItem(
         name="v8-asyncio",
-        python=PYTHON_VERSIONS,
+        python=["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"],
         dependencies={
             "pytest": "8.4.2",
             "pytest-asyncio": "1.2.0",
+            "pytest-cov": "7.0.0",
+        },
+    ),
+    PytestMatrixItem(
+        name="v9-asyncio",
+        python=["3.10", "3.11", "3.12", "3.13", "3.14"],
+        dependencies={
+            "pytest": "9.0.2",
+            "pytest-asyncio": "1.3.0",
             "pytest-cov": "7.0.0",
         },
     ),
