@@ -45,6 +45,15 @@ PYTEST_MATRIX = [
             "pytest-cov": "7.0.0",
         },
     ),
+    PytestMatrixItem(
+        name="v9-asyncio",
+        python=PYTHON_VERSIONS,
+        dependencies={
+            "pytest": "9.0.2",
+            "pytest-asyncio": "1.3.0",
+            "pytest-cov": "7.0.0",
+        },
+    ),
     # PytestMatrixItem(
     #     name="v8-anyio",
     #     python=PYTHON_VERSIONS,

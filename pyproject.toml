@@ -33,7 +33,7 @@ case_provider = "pytest_case_provider.plugin"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pytest = "^8"
+pytest = ">=8"
 typing-extensions = "^4"
 
 [tool.poetry.group.dev.dependencies]
